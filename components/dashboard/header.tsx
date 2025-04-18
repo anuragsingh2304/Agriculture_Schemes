@@ -1,20 +1,22 @@
 "use client"
-
-import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Bell, LogOut, Menu, Moon, Sun, User } from "lucide-react"
+import { Bell, LogOut, Menu, Moon, Sun, User, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTheme } from "@/providers/theme-provider"
 import { useLanguage } from "@/providers/language-provider"
 import { useTranslation } from "@/hooks/use-translation"
 
-export default function Header() {
+interface HeaderProps {
+  toggleSidebar: () => void
+  isSidebarOpen: boolean
+}
+
+export default function Header({ toggleSidebar, isSidebarOpen }: HeaderProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const { language, setLanguage } = useLanguage()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -30,11 +32,12 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
-      <div className="flex items-center md:hidden">
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          <Menu className="h-5 w-5" />
+      <div className="flex items-center">
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
+          {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           <span className="sr-only">Toggle menu</span>
         </Button>
+        <h1 className="ml-2 text-lg font-semibold md:hidden">Dashboard</h1>
       </div>
 
       <div className="flex flex-1 items-center justify-end space-x-4">
