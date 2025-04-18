@@ -40,11 +40,19 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Mobile sidebar */}
-      <div className={`md:hidden fixed inset-0 z-40 ${isSidebarOpen ? "block" : "hidden"}`}>
+      {/* Mobile sidebar with animation */}
+      <div
+        className={`md:hidden fixed inset-0 z-40 transition-opacity duration-300 ease-in-out ${
+          isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      >
         <div className="absolute inset-0 bg-gray-600 opacity-75" onClick={() => setIsSidebarOpen(false)}></div>
-        <div className="fixed inset-y-0 left-0 flex flex-col w-64 bg-white dark:bg-gray-800 border-r">
-          <Sidebar />
+        <div
+          className={`fixed inset-y-0 left-0 flex flex-col w-64 bg-white dark:bg-gray-800 border-r transform transition-transform duration-300 ease-in-out ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <Sidebar toggleSidebar={() => setIsSidebarOpen(false)} isMobile={true} />
         </div>
       </div>
 

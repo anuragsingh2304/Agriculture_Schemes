@@ -2,11 +2,17 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart, Database, Home, Settings, Users } from "lucide-react"
+import { BarChart, ChevronLeft, Home, Settings, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/hooks/use-translation"
+import { Button } from "@/components/ui/button"
 
-export default function Sidebar() {
+interface SidebarProps {
+  toggleSidebar?: () => void
+  isMobile?: boolean
+}
+
+export default function Sidebar({ toggleSidebar, isMobile = false }: SidebarProps) {
   const pathname = usePathname()
   const { t } = useTranslation()
 
@@ -15,14 +21,18 @@ export default function Sidebar() {
     { name: t("analytics"), href: "/dashboard/analytics", icon: BarChart },
     { name: t("users"), href: "/dashboard/users", icon: Users },
     { name: t("settings"), href: "/dashboard/settings", icon: Settings },
-    { name: "Test Database", href: "/test-db", icon: Database },
-    { name: "Setup Database", href: "/setup-db", icon: Database },
   ]
 
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-gray-800">
-      <div className="flex h-16 flex-shrink-0 items-center border-b px-4">
+      <div className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
         <span className="text-xl font-bold">MyApp</span>
+        {isMobile && toggleSidebar && (
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
+            <ChevronLeft className="h-5 w-5" />
+            <span className="sr-only">Close sidebar</span>
+          </Button>
+        )}
       </div>
       <div className="flex flex-1 flex-col">
         <nav className="flex-1 space-y-1 px-2 py-4">
