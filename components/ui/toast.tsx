@@ -3,20 +3,16 @@
 import type React from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useToast } from "./toast-context"
+import type { Toast as ToastType } from "./toast-context"
 
 export type ToastActionElement = React.ReactNode
 
 export interface ToastProps {
-  id: string
-  title?: React.ReactNode
-  description?: React.ReactNode
-  action?: ToastActionElement
+  toast: ToastType
+  onClose: () => void
 }
 
-export function Toast({ toast }: { toast: ToastProps }) {
-  const { removeToast } = useToast()
-
+export function Toast({ toast, onClose }: ToastProps) {
   const { id, title, description, type = "default" } = toast
 
   return (
@@ -37,7 +33,7 @@ export function Toast({ toast }: { toast: ToastProps }) {
         {description && <div className="text-sm opacity-90">{description}</div>}
       </div>
       <button
-        onClick={() => removeToast(id)}
+        onClick={onClose}
         className="absolute right-2 top-2 rounded-md p-1 text-gray-500 opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2"
       >
         <X className="h-4 w-4" />
