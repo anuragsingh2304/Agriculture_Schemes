@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
-import { prisma } from "@/lib/db"
+import { createPasswordReset, getUserByEmail } from "@/lib/server-db"
 
 export async function POST(req: Request) {
   try {
     const { email } = await req.json()
 
     // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    })
+    const user = await getUserByEmail(email)
 
     if (!user) {
       // For security reasons, don't reveal that the user doesn't exist
@@ -27,12 +23,10 @@ export async function POST(req: Request) {
     expiresAt.setHours(expiresAt.getHours() + 1) // Token expires in 1 hour
 
     // Save token to database
-    await prisma.passwordReset.create({
-      data: {
-        email,
-        token,
-        expiresAt,
-      },
+    await createPasswordReset({
+      email,
+      token,
+      expiresAt,
     })
 
     // In a real application, you would send an email with the reset link

@@ -9,3 +9,10 @@ export const prisma =
   })
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+
+// Handle Prisma initialization errors
+process.on("beforeExit", () => {
+  if (globalForPrisma.prisma) {
+    globalForPrisma.prisma.$disconnect()
+  }
+})
