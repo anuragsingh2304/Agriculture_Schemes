@@ -8,7 +8,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/use-translation"
 import { Progress } from "@/components/ui/progress"
 
@@ -88,6 +88,15 @@ export default function RegisterForm() {
       if (!response.ok) {
         throw new Error(data.error || "Failed to register")
       }
+
+      // Store token in localStorage
+      localStorage.setItem("auth_token", data.token)
+
+      // Show success toast
+      toast({
+        title: "Registration Successful",
+        description: "Your account has been created successfully!",
+      })
 
       // Redirect to dashboard
       router.push("/dashboard")

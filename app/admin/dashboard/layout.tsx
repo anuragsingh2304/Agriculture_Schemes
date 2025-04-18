@@ -1,21 +1,40 @@
+"use client"
+
 import type React from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import AdminHeader from "@/components/admin/header"
 import AdminSidebar from "@/components/admin/sidebar"
-import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
 
 export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Check for admin auth token in cookies
-  const cookieStore = cookies()
-  const token = cookieStore.get("admin_auth_token")
+  const router = useRouter()
+  const [isClient, setIsClient] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // If no token, redirect to admin login
-  if (!token) {
-    redirect("/admin/login")
+  useEffect(() => {
+    setIsClient(true)
+    // Check for auth token in localStorage
+    const token = localStorage.getItem("admin_auth_token")
+
+    if (!token) {
+      router.push("/admin/login")
+    } else {
+      setIsAuthenticated(true)
+    }
+  }, [router])
+
+  // Show nothing during authentication check on client
+  if (!isClient) {
+    return null
+  }
+
+  // If not authenticated, don't render the dashboard
+  if (!isAuthenticated) {
+    return null
   }
 
   return (

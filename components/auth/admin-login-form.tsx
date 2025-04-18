@@ -8,7 +8,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/use-translation"
 
 export default function AdminLoginForm() {
@@ -45,6 +45,15 @@ export default function AdminLoginForm() {
       if (!response.ok) {
         throw new Error(data.error || "Failed to login")
       }
+
+      // Store token in localStorage
+      localStorage.setItem("admin_auth_token", data.token)
+
+      // Show success toast
+      toast({
+        title: "Admin Login Successful",
+        description: "Welcome to the admin dashboard!",
+      })
 
       // Redirect to admin dashboard
       router.push("/admin/dashboard")

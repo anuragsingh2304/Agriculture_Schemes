@@ -8,7 +8,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/use-translation"
 
 export default function LoginForm() {
@@ -45,6 +45,15 @@ export default function LoginForm() {
       if (!response.ok) {
         throw new Error(data.error || "Failed to login")
       }
+
+      // Store token in localStorage
+      localStorage.setItem("auth_token", data.token)
+
+      // Show success toast
+      toast({
+        title: "Login Successful",
+        description: "Welcome back to the dashboard!",
+      })
 
       // Redirect to dashboard
       router.push("/dashboard")
