@@ -8,13 +8,13 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/toast-context"
 import { useTranslation } from "@/hooks/use-translation"
 
 export default function AdminLoginForm() {
   const { t } = useTranslation()
   const router = useRouter()
-  const { toast } = useToast()
+  const { addToast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -50,19 +50,20 @@ export default function AdminLoginForm() {
       localStorage.setItem("admin_auth_token", data.token)
 
       // Show success toast
-      toast({
+      addToast({
         title: "Admin Login Successful",
         description: "Welcome to the admin dashboard!",
+        type: "success",
       })
 
       // Redirect to admin dashboard
       router.push("/admin/dashboard")
       router.refresh()
     } catch (error) {
-      toast({
+      addToast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to login",
-        variant: "destructive",
+        type: "error",
       })
     } finally {
       setIsLoading(false)

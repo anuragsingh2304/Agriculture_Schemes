@@ -7,12 +7,12 @@ import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/toast-context"
 import { useTranslation } from "@/hooks/use-translation"
 
 export default function ForgotPasswordForm() {
   const { t } = useTranslation()
-  const { toast } = useToast()
+  const { addToast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [submitted, setSubmitted] = useState(false)
@@ -38,10 +38,10 @@ export default function ForgotPasswordForm() {
 
       setSubmitted(true)
     } catch (error) {
-      toast({
+      addToast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to process request",
-        variant: "destructive",
+        type: "error",
       })
     } finally {
       setIsLoading(false)

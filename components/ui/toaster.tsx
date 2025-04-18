@@ -1,24 +1,28 @@
 "use client"
 
-import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast"
-import { useToast } from "@/hooks/use-toast"
+import type React from "react"
+import { Toast } from "./toast"
+import { ToastProvider, useToast } from "./toast-context"
 
-export function Toaster() {
+function ToastContainer() {
   const { toasts } = useToast()
 
   return (
-    <ToastProvider>
-      {toasts.map(({ id, title, description, action, ...props }) => (
-        <Toast key={id} {...props}>
-          <div className="grid gap-1">
-            {title && <ToastTitle>{title}</ToastTitle>}
-            {description && <ToastDescription>{description}</ToastDescription>}
-          </div>
-          {action}
-          <ToastClose />
-        </Toast>
+    <div className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">
+      {toasts.map((toast) => (
+        <div key={toast.id} className="mb-2">
+          <Toast toast={toast} />
+        </div>
       ))}
-      <ToastViewport />
+    </div>
+  )
+}
+
+export function Toaster({ children }: { children: React.ReactNode }) {
+  return (
+    <ToastProvider>
+      {children}
+      <ToastContainer />
     </ToastProvider>
   )
 }

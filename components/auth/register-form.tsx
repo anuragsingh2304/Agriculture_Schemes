@@ -8,14 +8,14 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/toast-context"
 import { useTranslation } from "@/hooks/use-translation"
 import { Progress } from "@/components/ui/progress"
 
 export default function RegisterForm() {
   const { t } = useTranslation()
   const router = useRouter()
-  const { toast } = useToast()
+  const { addToast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -51,19 +51,19 @@ export default function RegisterForm() {
     e.preventDefault()
 
     if (formData.password !== formData.confirmPassword) {
-      toast({
+      addToast({
         title: "Error",
         description: "Passwords do not match",
-        variant: "destructive",
+        type: "error",
       })
       return
     }
 
     if (passwordStrength < 50) {
-      toast({
+      addToast({
         title: "Weak Password",
         description: "Please choose a stronger password",
-        variant: "destructive",
+        type: "error",
       })
       return
     }
@@ -93,19 +93,20 @@ export default function RegisterForm() {
       localStorage.setItem("auth_token", data.token)
 
       // Show success toast
-      toast({
+      addToast({
         title: "Registration Successful",
         description: "Your account has been created successfully!",
+        type: "success",
       })
 
       // Redirect to dashboard
       router.push("/dashboard")
       router.refresh()
     } catch (error) {
-      toast({
+      addToast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to register",
-        variant: "destructive",
+        type: "error",
       })
     } finally {
       setIsLoading(false)

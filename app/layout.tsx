@@ -26,8 +26,7 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             <LanguageProvider>
-              {children}
-              <Toaster />
+              <Toaster>{children}</Toaster>
             </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>
