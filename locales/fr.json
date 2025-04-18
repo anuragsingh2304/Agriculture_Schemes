@@ -1,0 +1,67 @@
+{
+  "common": {
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié",
+    "fullName": "Nom complet",
+    "submit": "Soumettre",
+    "reset": "Réinitialiser",
+    "dashboard": "Tableau de bord",
+    "logout": "Déconnexion",
+    "theme": "Thème",
+    "language": "Langue",
+    "dark": "Sombre",
+    "light": "Clair",
+    "english": "Anglais",
+    "hindi": "Hindi",
+    "french": "Français",
+    "welcome": "Bienvenue",
+    "admin": "Admin",
+    "users": "Utilisateurs",
+    "settings": "Paramètres"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire",
+    "email": "Veuillez entrer un email valide",
+    "passwordLength": "Le mot de passe doit comporter au moins 8 caractères",
+    "passwordMatch": "Les mots de passe ne correspondent pas",
+    "invalidCredentials": "Email ou mot de passe invalide"
+  },
+  "pages": {
+    "login": {
+      "title": "Connectez-vous à votre compte",
+      "subtitle": "Entrez vos identifiants pour accéder à votre compte",
+      "noAccount": "Vous n'avez pas de compte?",
+      "createAccount": "Créer un compte"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "subtitle": "Remplissez les détails pour créer votre compte",
+      "haveAccount": "Vous avez déjà un compte?",
+      "loginHere": "Connectez-vous ici"
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Entrez votre email pour recevoir un lien de réinitialisation",
+      "instructions": "Nous vous enverrons un email avec un lien pour réinitialiser votre mot de passe",
+      "backToLogin": "Retour à la connexion"
+    },
+    "dashboard": {
+      "title": "Tableau de bord",
+      "welcome": "Bienvenue sur votre tableau de bord",
+      "stats": "Vos statistiques",
+      "recentActivity": "Activité récente"
+    },
+    "admin": {
+      "title": "Tableau de bord administrateur",
+      "welcome": "Bienvenue sur le tableau de bord administrateur",
+      "userStats": "Statistiques des utilisateurs",
+      "totalUsers": "Utilisateurs totaux",
+      "newUsers": "Nouveaux utilisateurs",
+      "activeUsers": "Utilisateurs actifs"
+    }
+  }
+}
