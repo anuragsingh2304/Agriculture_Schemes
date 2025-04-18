@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart, Home, Settings, Users } from "lucide-react"
+import { BarChart, Database, Home, Settings, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/hooks/use-translation"
 
@@ -15,6 +15,8 @@ export default function Sidebar() {
     { name: t("analytics"), href: "/dashboard/analytics", icon: BarChart },
     { name: t("users"), href: "/dashboard/users", icon: Users },
     { name: t("settings"), href: "/dashboard/settings", icon: Settings },
+    { name: "Test Database", href: "/test-db", icon: Database },
+    { name: "Setup Database", href: "/setup-db", icon: Database },
   ]
 
   return (
