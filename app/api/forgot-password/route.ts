@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import { randomBytes } from "crypto"
-import { createPasswordReset, getUserByEmail } from "@/lib/server-db"
+import { createPasswordResetToken, getUserByEmail } from "@/lib/db-service"
 
 export async function POST(req: Request) {
   try {
@@ -17,17 +16,8 @@ export async function POST(req: Request) {
       )
     }
 
-    // Generate token
-    const token = randomBytes(32).toString("hex")
-    const expiresAt = new Date()
-    expiresAt.setHours(expiresAt.getHours() + 1) // Token expires in 1 hour
-
-    // Save token to database
-    await createPasswordReset({
-      email,
-      token,
-      expiresAt,
-    })
+    // Generate token and save to database
+    const token = await createPasswordResetToken(email)
 
     // In a real application, you would send an email with the reset link
     // For this example, we'll just return a success message

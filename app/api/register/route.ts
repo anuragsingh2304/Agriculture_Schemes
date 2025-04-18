@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import { hash } from "bcryptjs"
-import { createUser, getUserByEmail } from "@/lib/server-db"
+import { createUser, getUserByEmail } from "@/lib/db-service"
 
 export async function POST(req: Request) {
   try {
@@ -13,15 +12,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "User already exists" }, { status: 400 })
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 10)
-
     // Create user
-    const user = await createUser({
-      name,
-      email,
-      passwordHash: hashedPassword,
-    })
+    const user = await createUser({ name, email, password })
 
     return NextResponse.json({ message: "User created successfully", userId: user.id }, { status: 201 })
   } catch (error) {
