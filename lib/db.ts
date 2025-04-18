@@ -11,14 +11,12 @@ const pool = mysql.createPool({
   queueLimit: 0,
 })
 
-export const db = {
-  query: async (sql: string, params?: any[]) => {
-    try {
-      const [rows, fields] = await pool.execute(sql, params)
-      return [rows, fields]
-    } catch (error) {
-      console.error("Database error:", error)
-      throw error
-    }
-  },
+export async function executeQuery<T>({ query, values }: { query: string; values?: any[] }): Promise<T> {
+  try {
+    const [rows] = await pool.execute(query, values)
+    return rows as T
+  } catch (error) {
+    console.error("Database query error:", error)
+    throw new Error("Database query failed")
+  }
 }

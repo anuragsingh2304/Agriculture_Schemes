@@ -2,16 +2,14 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { ThemeProvider } from "@/providers/theme-provider"
-import { LanguageProvider } from "@/providers/language-provider"
-import { AuthProvider } from "@/providers/auth-provider"
-import { Toaster } from "@/components/ui/toaster"
+import { ThemeProvider } from "@/contexts/theme-context"
+import { LanguageProvider } from "@/contexts/language-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Next.js MySQL App",
-  description: "Full-stack application with Next.js and MySQL",
+  title: "Next.js Auth App",
+  description: "Full-stack Next.js application with MySQL",
     generator: 'v0.dev'
 }
 
@@ -21,15 +19,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <AuthProvider>
-          <ThemeProvider>
-            <LanguageProvider>
-              <Toaster>{children}</Toaster>
-            </LanguageProvider>
-          </ThemeProvider>
-        </AuthProvider>
+    <html lang="en">
+      <body className={`${inter.className} min-h-screen bg-gray-50 dark:bg-gray-900`}>
+        <ThemeProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

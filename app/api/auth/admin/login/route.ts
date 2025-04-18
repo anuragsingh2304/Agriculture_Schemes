@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
 
     // Get user from database
     const users = await executeQuery<any[]>({
-      query: "SELECT * FROM users WHERE name = ?",
-      values: [username],
+      query: "SELECT * FROM users WHERE name = ? AND role = ?",
+      values: [username, "admin"],
     })
 
     if (users.length === 0) {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("Login error:", error)
+    console.error("Admin login error:", error)
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
