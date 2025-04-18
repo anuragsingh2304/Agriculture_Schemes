@@ -1,28 +1,28 @@
 import type React from "react"
-import Header from "@/components/dashboard/header"
-import Sidebar from "@/components/dashboard/sidebar"
+import AdminHeader from "@/components/admin/header"
+import AdminSidebar from "@/components/admin/sidebar"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 
-export default function DashboardLayout({
+export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Check for auth token in cookies
+  // Check for admin auth token in cookies
   const cookieStore = cookies()
-  const token = cookieStore.get("auth_token")
+  const token = cookieStore.get("admin_auth_token")
 
-  // If no token, redirect to login
+  // If no token, redirect to admin login
   if (!token) {
-    redirect("/login")
+    redirect("/admin/login")
   }
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      <Sidebar />
+      <AdminSidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header />
+        <AdminHeader />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>

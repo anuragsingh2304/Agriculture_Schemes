@@ -2,35 +2,31 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { LanguageProvider } from "@/contexts/language-context"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { SessionProvider } from "@/components/session-provider"
+import { ThemeProvider } from "@/providers/theme-provider"
+import { LanguageProvider } from "@/providers/language-provider"
+import { AuthProvider } from "@/providers/auth-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "GamingSoft",
-  description: "GamingSoft - Your Gaming Platform",
+  title: "Next.js MySQL App",
+  description: "Full-stack application with Next.js and MySQL",
     generator: 'v0.dev'
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getServerSession(authOptions)
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <SessionProvider session={session}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <AuthProvider>
+          <ThemeProvider>
             <LanguageProvider>{children}</LanguageProvider>
           </ThemeProvider>
-        </SessionProvider>
+        </AuthProvider>
       </body>
     </html>
   )

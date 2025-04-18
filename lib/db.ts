@@ -1,15 +1,24 @@
-import { PrismaClient } from "@prisma/client"
+import mysql from "mysql2/promise"
 
-// PrismaClient is attached to the `global` object in development to prevent
-// exhausting your database connection limit.
-// Learn more: https://pris.ly/d/help/next-js-best-practices
+// Create a connection pool
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+})
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient }
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-  })
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+export const db = {
+  query: async (sql: string, params?: any[]) => {
+    try {
+      const [rows, fields] = await pool.execute(sql, params)
+      return [rows, fields]
+    } catch (error) {
+      console.error("Database error:", error)
+      throw error
+    }
+  },
+}
