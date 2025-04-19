@@ -11,10 +11,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Username and password are required" }, { status: 400 })
     }
 
-    // Get user from database
+    // Get user from database - FIXED: Don't filter by role in the query to debug
     const users = await executeQuery<any[]>({
-      query: "SELECT * FROM users WHERE name = ? AND role = ?",
-      values: [username, "admin"],
+      query: "SELECT * FROM users WHERE name = ?",
+      values: [username],
     })
 
     if (users.length === 0) {
@@ -22,6 +22,11 @@ export async function POST(request: NextRequest) {
     }
 
     const user = users[0]
+
+    // Check if user is admin after finding them
+    if (user.role !== "admin") {
+      return NextResponse.json({ message: "You don't have admin privileges" }, { status: 403 })
+    }
 
     // Verify password
     const isPasswordValid = await verifyPassword(password, user.password_hash)
