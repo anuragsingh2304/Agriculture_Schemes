@@ -33,27 +33,6 @@ export function AdminSidebar() {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h2>
       </div>
 
-      {/* Controls moved from header to sidebar top */}
-      <div className="border-b p-4">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={toggleTheme}
-            className="flex items-center rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-          >
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            <span className="ml-2">Theme</span>
-          </button>
-
-          <button
-            onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-            className="flex items-center rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-          >
-            <Globe className="h-5 w-5" />
-            <span className="ml-2">{language === "en" ? "EN" : "HI"}</span>
-          </button>
-        </div>
-      </div>
-
       <div className="py-4">
         <nav className="space-y-1 px-2">
           <Link
@@ -100,18 +79,34 @@ export function AdminSidebar() {
             <Settings className="mr-3 h-5 w-5" />
             Settings
           </Link>
-        </nav>
-      </div>
 
-      {/* Logout button at the bottom of sidebar */}
-      <div className="absolute bottom-0 w-full border-t p-4">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-        >
-          <LogOut className="mr-3 h-5 w-5" />
-          {t("logout")}
-        </button>
+          {/* Theme switcher */}
+          <button
+            onClick={toggleTheme}
+            className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+          >
+            {theme === "dark" ? <Sun className="mr-3 h-5 w-5" /> : <Moon className="mr-3 h-5 w-5" />}
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
+
+          {/* Language switcher */}
+          <button
+            onClick={() => setLanguage(language === "en" ? "hi" : "en")}
+            className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+          >
+            <Globe className="mr-3 h-5 w-5" />
+            {language === "en" ? "हिंदी" : "English"}
+          </button>
+
+          {/* Logout button */}
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+          >
+            <LogOut className="mr-3 h-5 w-5" />
+            {t("logout")}
+          </button>
+        </nav>
       </div>
     </div>
   )
