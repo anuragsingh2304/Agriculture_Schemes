@@ -1,0 +1,368 @@
+"use client"
+
+import type React from "react"
+import { useState, useEffect } from "react"
+import { crops } from "@/utils/mockdata"
+import texts from "@/language/en.json"
+import { Plus, Edit, Trash2, Leaf } from "lucide-react"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+
+export default function AdminCrops() {
+  const [cropName, setCropName] = useState("")
+  const [season, setSeason] = useState("")
+  const [pesticides, setPesticides] = useState("")
+  const [fertilizers, setFertilizers] = useState("")
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editingCropId, setEditingCropId] = useState<string | null>(null)
+  const [cropType, setCropType] = useState("")
+  const [waterRequirement, setWaterRequirement] = useState("")
+  const [soilType, setSoilType] = useState("")
+  const [growthDuration, setGrowthDuration] = useState("")
+  const [averageYield, setAverageYield] = useState("")
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check if admin is authenticated (in a real app, use a proper auth system)
+    const authenticated = localStorage.getItem("adminAuthenticated") === "true"
+    setIsAuthenticated(authenticated)
+
+    // If not authenticated, redirect to login
+    if (!authenticated) {
+      router.push("/admin/login")
+    }
+  }, [router])
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // This would normally handle adding a new crop
+    const formData = {
+      cropName,
+      season,
+      pesticides,
+      fertilizers,
+      cropType,
+      waterRequirement,
+      soilType,
+      growthDuration,
+      averageYield,
+    }
+
+    if (isEditMode) {
+      console.log("Updating crop:", editingCropId, formData)
+    } else {
+      console.log("Adding new crop:", formData)
+    }
+
+    // Reset form
+    resetForm()
+  }
+
+  const resetForm = () => {
+    setCropName("")
+    setSeason("")
+    setPesticides("")
+    setFertilizers("")
+    setCropType("")
+    setWaterRequirement("")
+    setSoilType("")
+    setGrowthDuration("")
+    setAverageYield("")
+    setIsEditMode(false)
+    setEditingCropId(null)
+  }
+
+  const handleEditCrop = (crop: (typeof crops)[0]) => {
+    // Populate form with crop data for editing
+    setCropName(crop.name)
+    setSeason(crop.season)
+    setPesticides(crop.pesticides)
+    setFertilizers(crop.fertilizers)
+    // In a real app, you would set other fields here too
+    setIsEditMode(true)
+    setEditingCropId(crop.id)
+
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handleDeleteCrop = (cropId: string) => {
+    // This would normally delete the crop
+    console.log("Deleting crop:", cropId)
+  }
+
+  // Generate a background image query based on the crop name
+  const getImageQuery = (cropName: string) => {
+    return `farming ${cropName.toLowerCase()} field`
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p>Please login to access the admin panel...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto">
+      <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{texts.admin.crops.title}</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <div className="card p-1 sticky top-20">
+            <h2 className="section-title border-b border-gray-200 dark:border-gray-700 pb-2 mb-4 flex items-center">
+              {isEditMode ? (
+                <>
+                  <Edit size={18} className="mr-2 text-blue-600 dark:text-blue-400" />
+                  Edit Crop
+                </>
+              ) : (
+                <>
+                  <Plus size={18} className="mr-2 text-green-600 dark:text-green-400" />
+                  {texts.admin.crops.addCrop}
+                </>
+              )}
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="cropName" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  {texts.admin.crops.cropName} *
+                </label>
+                <input
+                  type="text"
+                  id="cropName"
+                  value={cropName}
+                  onChange={(e) => setCropName(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="cropType" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  Crop Type *
+                </label>
+                <select
+                  id="cropType"
+                  value={cropType}
+                  onChange={(e) => setCropType(e.target.value)}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select Crop Type</option>
+                  <option value="cereal">Cereal Crop</option>
+                  <option value="pulse">Pulse Crop</option>
+                  <option value="oilseed">Oilseed Crop</option>
+                  <option value="vegetable">Vegetable Crop</option>
+                  <option value="fruit">Fruit Crop</option>
+                  <option value="cash">Cash Crop</option>
+                  <option value="plantation">Plantation Crop</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="season" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  {texts.admin.crops.season} *
+                </label>
+                <select
+                  id="season"
+                  value={season}
+                  onChange={(e) => setSeason(e.target.value)}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select Season</option>
+                  <option value="Kharif">Kharif</option>
+                  <option value="Rabi">Rabi</option>
+                  <option value="Zaid">Zaid</option>
+                  <option value="Year-round">Year-round</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="soilType" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  Soil Type *
+                </label>
+                <select
+                  id="soilType"
+                  value={soilType}
+                  onChange={(e) => setSoilType(e.target.value)}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select Soil Type</option>
+                  <option value="Alluvial">Alluvial Soil</option>
+                  <option value="Black">Black Soil</option>
+                  <option value="Red">Red Soil</option>
+                  <option value="Laterite">Laterite Soil</option>
+                  <option value="Sandy">Sandy Soil</option>
+                  <option value="Clay">Clay Soil</option>
+                  <option value="Loamy">Loamy Soil</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="waterRequirement" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  Water Requirement *
+                </label>
+                <select
+                  id="waterRequirement"
+                  value={waterRequirement}
+                  onChange={(e) => setWaterRequirement(e.target.value)}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select Water Requirement</option>
+                  <option value="Low">Low (Drought Resistant)</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Very High">Very High (Water Intensive)</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="growthDuration" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  Growth Duration (Days) *
+                </label>
+                <input
+                  type="number"
+                  id="growthDuration"
+                  value={growthDuration}
+                  onChange={(e) => setGrowthDuration(e.target.value)}
+                  className="input-field"
+                  placeholder="e.g., 90-120"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="averageYield" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  Average Yield (Quintal/Hectare) *
+                </label>
+                <input
+                  type="text"
+                  id="averageYield"
+                  value={averageYield}
+                  onChange={(e) => setAverageYield(e.target.value)}
+                  className="input-field"
+                  placeholder="e.g., 25-30"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="pesticides" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  {texts.admin.crops.pesticides}
+                </label>
+                <textarea
+                  id="pesticides"
+                  value={pesticides}
+                  onChange={(e) => setPesticides(e.target.value)}
+                  className="input-field"
+                  rows={3}
+                ></textarea>
+              </div>
+
+              <div>
+                <label htmlFor="fertilizers" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  {texts.admin.crops.fertilizers}
+                </label>
+                <textarea
+                  id="fertilizers"
+                  value={fertilizers}
+                  onChange={(e) => setFertilizers(e.target.value)}
+                  className="input-field"
+                  rows={3}
+                ></textarea>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                {isEditMode && (
+                  <button type="button" className="btn-secondary text-xs" onClick={resetForm}>
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className={`btn-primary ${isEditMode ? "bg-blue-600 hover:bg-blue-700" : ""} ${
+                    isEditMode ? "ml-auto" : "w-full"
+                  }`}
+                >
+                  {isEditMode ? "Update Crop" : texts.common.submit}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2">
+          <div className="card p-1">
+            <h2 className="section-title border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+              Crop List ({crops.length})
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {crops.map((crop) => (
+                <div
+                  key={crop.id}
+                  className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <div className="h-32 relative">
+                    <Image
+                      src={`/abstract-geometric-shapes.png?key=c933b&height=150&width=400&query=${getImageQuery(crop.name)}`}
+                      alt={crop.name}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute top-2 left-2 bg-white dark:bg-gray-800 rounded-full p-1 shadow-md">
+                      <Leaf className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                  </div>
+                  <div className="p-1">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-800 dark:text-white">{crop.name}</h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Season: {crop.season}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                          onClick={() => handleEditCrop(crop)}
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                          onClick={() => handleDeleteCrop(crop.id)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs">
+                      <div className="mb-1">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Pesticides:</span>{" "}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {crop.pesticides.length > 30 ? crop.pesticides.slice(0, 30) + "..." : crop.pesticides}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Fertilizers:</span>{" "}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {crop.fertilizers.length > 30 ? crop.fertilizers.slice(0, 30) + "..." : crop.fertilizers}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

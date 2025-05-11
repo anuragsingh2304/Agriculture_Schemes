@@ -1,0 +1,94 @@
+{
+  "common": {
+    "appName": "Farmer Government Aided Schemes",
+    "home": "Home",
+    "login": "Login",
+    "register": "Register",
+    "admin": "Admin",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "readMore": "Read More",
+    "applyNow": "Apply Now",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "back": "Back",
+    "loading": "Loading...",
+    "footer": "© 2023 Farmer Government Aided Schemes. All rights reserved."
+  },
+  "home": {
+    "title": "Government Schemes for Farmers",
+    "subtitle": "Explore various government schemes designed to support farmers across India",
+    "schemeCount": "Available Schemes"
+  },
+  "schemeDetails": {
+    "eligibility": "Eligibility Criteria",
+    "benefits": "Benefits",
+    "requiredDocuments": "Required Documents"
+  },
+  "apply": {
+    "title": "Apply for Scheme",
+    "subtitle": "Fill the form below to apply for the scheme",
+    "personalDetails": "Personal Details",
+    "name": "Full Name",
+    "aadhar": "Aadhar Number",
+    "address": "Address",
+    "landDetails": "Land Details",
+    "landSize": "Land Size (in acres)",
+    "income": "Annual Income (in ₹)",
+    "documents": "Upload Documents",
+    "uploadInstructions": "Please upload clear scanned copies of the following documents",
+    "applicationSubmitted": "Your application has been submitted successfully. Application ID:",
+    "termsAgree": "I agree to the terms and conditions"
+  },
+  "auth": {
+    "loginTitle": "Login to Your Account",
+    "registerTitle": "Create a New Account",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "signUp": "Sign Up",
+    "signIn": "Sign In"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "welcome": "Welcome to the Admin Dashboard",
+      "totalSchemes": "Total Schemes",
+      "pendingApplications": "Pending Applications",
+      "approvedApplications": "Approved Applications",
+      "rejectedApplications": "Rejected Applications"
+    },
+    "crops": {
+      "title": "Manage Crops",
+      "addCrop": "Add New Crop",
+      "cropName": "Crop Name",
+      "season": "Growing Season",
+      "pesticides": "Recommended Pesticides",
+      "fertilizers": "Recommended Fertilizers"
+    },
+    "schemes": {
+      "title": "Manage Schemes",
+      "addScheme": "Add New Scheme",
+      "schemeTitle": "Scheme Title",
+      "shortDescription": "Short Description",
+      "fullDescription": "Full Description",
+      "eligibility": "Eligibility Criteria",
+      "benefits": "Benefits",
+      "documents": "Required Documents"
+    },
+    "approvals": {
+      "title": "Application Approvals",
+      "applicantName": "Applicant Name",
+      "schemeApplied": "Scheme Applied",
+      "applicationDate": "Application Date",
+      "status": "Status",
+      "actions": "Actions",
+      "approve": "Approve",
+      "reject": "Reject",
+      "view": "View Details"
+    }
+  }
+}

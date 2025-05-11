@@ -3,160 +3,122 @@
 import type React from "react"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useLanguage } from "@/contexts/language-context"
 import Image from "next/image"
-import { Eye, EyeOff } from "lucide-react"
+import { Lock, User, ArrowRight, AlertCircle } from "lucide-react"
 
 export default function AdminLogin() {
-  const { t } = useLanguage()
-  const router = useRouter()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setLoading(true)
+    setIsLoading(true)
 
-    try {
-      const response = await fetch("/api/auth/admin/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed")
+    // Mock authentication - in a real app, this would be an API call
+    setTimeout(() => {
+      // For demo purposes, accept any non-empty username/password
+      if (username && password) {
+        // Store authentication state (in a real app, use a proper auth system)
+        localStorage.setItem("adminAuthenticated", "true")
+        router.push("/admin/dashboard")
+      } else {
+        setError("Invalid username or password")
       }
-
-      router.push("/admin/dashboard")
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed")
-    } finally {
-      setLoading(false)
-    }
+      setIsLoading(false)
+    }, 1000)
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center justify-center">
-          <div className="relative h-40 w-40">
-            <Image
-              src="/secure-admin-access.png"
-              alt="Admin Login"
-              width={160}
-              height={160}
-              className="object-contain"
-            />
+    <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-12rem)]">
+      <div className="w-full max-w-md overflow-hidden rounded-xl shadow-2xl bg-white dark:bg-gray-800">
+        <div className="p-6">
+          <div className="flex justify-center mb-6">
+            <div className="relative w-16 h-16">
+              <Image src="/images/logo.png" alt="Logo" fill className="object-cover rounded-full" />
+            </div>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Admin Login
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Please sign in to access the admin panel.
+
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">Admin Login</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
+            Enter your credentials to access the admin panel
           </p>
-        </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-            <div className="text-sm text-red-700 dark:text-red-200">{error}</div>
-          </div>
-        )}
+          {error && (
+            <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4 flex items-center gap-2">
+              <AlertCircle size={16} />
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label htmlFor="username" className="sr-only">
-                {t("username")}
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </span>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full border-0 bg-transparent p-0 pl-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-400 sm:text-sm"
-                  placeholder={t("username")}
-                />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <User size={16} className="text-gray-400" />
               </div>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="input-field pl-10"
+                placeholder="Username"
+                required
+              />
             </div>
 
-            <div>
-              <label htmlFor="password" className="sr-only">
-                {t("password")}
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </span>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full border-0 bg-transparent p-0 pl-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-400 sm:text-sm"
-                  placeholder={t("password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-500 focus:outline-none dark:text-gray-400"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Lock size={16} className="text-gray-400" />
               </div>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field pl-10"
+                placeholder="Password"
+                required
+              />
             </div>
-          </div>
 
-          <div>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input type="checkbox" className="rounded text-green-600 focus:ring-green-500 mr-2" />
+                <span className="text-xs text-gray-700 dark:text-gray-300">Remember me</span>
+              </label>
+              <a href="#" className="text-xs text-green-600 dark:text-green-400 hover:underline">
+                Forgot Password?
+              </a>
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-[#1e3a8a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3a8a]/90 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 disabled:opacity-70 dark:bg-[#3b82f6] dark:hover:bg-[#3b82f6]/90 dark:focus:ring-[#3b82f6]"
+              className="btn-primary w-full flex items-center justify-center gap-2"
+              disabled={isLoading}
             >
-              {loading ? "Loading..." : t("signIn")}
+              {isLoading ? (
+                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              ) : (
+                <>
+                  Login to Admin Panel
+                  <ArrowRight size={16} />
+                </>
+              )}
             </button>
-          </div>
-        </form>
+          </form>
 
-        <div className="mt-4 text-center text-sm">
-          <Link
-            href="/"
-            className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-          >
-            Back to user login
-          </Link>
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-center text-gray-600 dark:text-gray-400">
+              This area is restricted to authorized personnel only.
+              <br />
+              Unauthorized access attempts may be subject to legal action.
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,181 +1,133 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useLanguage } from "@/contexts/language-context"
 import Image from "next/image"
-import { Eye, EyeOff } from "lucide-react"
+import Link from "next/link"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import texts from "@/language/en.json"
+import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react"
 
 export default function Login() {
-  const { t } = useLanguage()
-  const router = useRouter()
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setLoading(true)
+    setIsLoading(true)
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password, rememberMe }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed")
+    // Mock authentication - in a real app, this would be an API call
+    setTimeout(() => {
+      // For demo purposes, accept any non-empty email/password
+      if (email && password) {
+        // Store authentication state (in a real app, use a proper auth system)
+        localStorage.setItem("userAuthenticated", "true")
+        router.push("/user/dashboard")
+      } else {
+        setError("Invalid email or password")
       }
-
-      router.push("/dashboard")
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed")
-    } finally {
-      setLoading(false)
-    }
+      setIsLoading(false)
+    }, 1000)
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center justify-center">
-          <div className="relative h-40 w-40">
-            <Image src="/secure-access-concept.png" alt="Login" width={160} height={160} className="object-contain" />
+    <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-12rem)]">
+      <div className="w-full max-w-5xl overflow-hidden rounded-xl shadow-2xl flex flex-col md:flex-row bg-white dark:bg-gray-800">
+        {/* Left side - Image */}
+        <div className="relative hidden md:block md:w-1/2 bg-green-600">
+          <Image src="/images/login-bg.png" alt="Farming landscape" fill className="object-cover opacity-90" />
+          <div className="absolute inset-0 bg-green-800/30 flex flex-col justify-center p-2">
+            <div className="bg-white/10 backdrop-blur-sm p-1 rounded-lg max-w-xs mx-auto">
+              <h2 className="text-lg font-bold text-white text-center mb-2">Supporting Farmers Across India</h2>
+              <p className="text-sm text-white/90 text-center">
+                Access government schemes designed to empower agricultural communities and enhance productivity.
+              </p>
+            </div>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            {t("login")}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">{t("pleaseSignIn")}</p>
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-            <div className="text-sm text-red-700 dark:text-red-200">{error}</div>
-          </div>
-        )}
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label htmlFor="username" className="sr-only">
-                {t("username")}
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </span>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full border-0 bg-transparent p-0 pl-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-400 sm:text-sm"
-                  placeholder={t("username")}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="sr-only">
-                {t("password")}
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </span>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full border-0 bg-transparent p-0 pl-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-400 sm:text-sm"
-                  placeholder={t("password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-500 focus:outline-none dark:text-gray-400"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
+        {/* Right side - Form */}
+        <div className="w-full md:w-1/2 p-2">
+          <div className="flex justify-center mb-6">
+            <Image src="/images/logo.png" alt="Logo" width={60} height={60} className="rounded-full" />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white text-center mb-6">{texts.auth.loginTitle}</h1>
+
+          {error && (
+            <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4 flex items-center gap-2">
+              <AlertCircle size={16} />
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Mail size={16} className="text-gray-400" />
+              </div>
               <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800"
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field pl-10"
+                placeholder={texts.auth.email}
+                required
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                {t("rememberMe")}
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Lock size={16} className="text-gray-400" />
+              </div>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field pl-10"
+                placeholder={texts.auth.password}
+                required
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input type="checkbox" className="rounded text-green-600 focus:ring-green-500 mr-2" />
+                <span className="text-xs text-gray-700 dark:text-gray-300">Remember me</span>
               </label>
+              <a href="#" className="text-xs text-green-600 dark:text-green-400 hover:underline">
+                {texts.auth.forgotPassword}
+              </a>
             </div>
 
-            <div className="text-sm">
-              <Link
-                href="/forgot-password"
-                className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-              >
-                {t("forgotPassword")}
-              </Link>
-            </div>
-          </div>
-
-          <div>
             <button
               type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-[#1e3a8a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3a8a]/90 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 disabled:opacity-70 dark:bg-[#3b82f6] dark:hover:bg-[#3b82f6]/90 dark:focus:ring-[#3b82f6]"
+              className="btn-primary w-full flex items-center justify-center gap-2"
+              disabled={isLoading}
             >
-              {loading ? "Loading..." : t("signIn")}
+              {isLoading ? (
+                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              ) : (
+                <>
+                  {texts.auth.signIn}
+                  <ArrowRight size={16} />
+                </>
+              )}
             </button>
-          </div>
-        </form>
 
-        <div className="mt-4 text-center text-sm">
-          <span className="text-gray-600 dark:text-gray-400">{t("dontHaveAccount")}</span>{" "}
-          <Link
-            href="/register"
-            className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-          >
-            {t("signUp")}
-          </Link>
+            <p className="text-xs text-center text-gray-600 dark:text-gray-400">
+              {texts.auth.noAccount}{" "}
+              <Link href="/register" className="text-green-600 dark:text-green-400 hover:underline font-medium">
+                {texts.auth.signUp}
+              </Link>
+            </p>
+          </form>
         </div>
       </div>
     </div>

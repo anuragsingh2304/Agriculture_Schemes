@@ -1,15 +1,16 @@
 import type React from "react"
+import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/contexts/theme-context"
-import { LanguageProvider } from "@/contexts/language-context"
+import Header from "@/components/Header"
+import Footer from "@/components/Footer"
+import texts from "@/language/en.json"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Next.js Auth App",
-  description: "Full-stack Next.js application with MySQL",
+  title: texts.common.appName,
+  description: texts.home.subtitle,
     generator: 'v0.dev'
 }
 
@@ -19,11 +20,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-gray-50 dark:bg-gray-900`}>
-        <ThemeProvider>
-          <LanguageProvider>{children}</LanguageProvider>
-        </ThemeProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <div className="flex flex-grow">
+            <main className="flex-grow overflow-x-hidden w-full">{children}</main>
+          </div>
+          <Footer />
+        </div>
       </body>
     </html>
   )

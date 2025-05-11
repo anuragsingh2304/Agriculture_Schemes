@@ -1,244 +1,153 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useLanguage } from "@/contexts/language-context"
 import Image from "next/image"
-import { Eye, EyeOff } from "lucide-react"
+import Link from "next/link"
+import { useState } from "react"
+import texts from "@/language/en.json"
+import { Mail, Lock, User, Phone, ArrowRight } from "lucide-react"
 
 export default function Register() {
-  const { t } = useLanguage()
-  const router = useRouter()
-  const [username, setUsername] = useState("")
-  const [mobileNumber, setMobileNumber] = useState("")
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, mobileNumber, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed")
-      }
-
-      router.push("/login")
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Registration failed")
-    } finally {
-      setLoading(false)
-    }
+    // This would normally handle registration logic
+    console.log("Registration attempt with:", { name, email, phone, password, confirmPassword })
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center justify-center">
-          <div className="relative h-40 w-40">
-            <Image
-              src="/vintage-cash-register.png"
-              alt="Register"
-              width={160}
-              height={160}
-              className="object-contain"
-            />
+    <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-12rem)]">
+      <div className="w-full max-w-5xl overflow-hidden rounded-xl shadow-2xl flex flex-col md:flex-row bg-white dark:bg-gray-800">
+        {/* Left side - Form */}
+        <div className="w-full md:w-1/2 p-2">
+          <div className="flex justify-center mb-6">
+            <Image src="/images/logo.png" alt="Logo" width={60} height={60} className="rounded-full" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            {t("register")}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">{t("pleaseRegister")}</p>
+
+          <h1 className="text-md font-bold text-gray-900 dark:text-white text-center mb-6">
+            {texts.auth.registerTitle}
+          </h1>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <User size={16} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-field pl-10"
+                placeholder="Full Name"
+                required
+              />
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Mail size={16} className="text-gray-400" />
+              </div>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field pl-10"
+                placeholder={texts.auth.email}
+                required
+              />
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Phone size={16} className="text-gray-400" />
+              </div>
+              <input
+                type="tel"
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="input-field pl-10"
+                placeholder="Phone Number"
+                required
+              />
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Lock size={16} className="text-gray-400" />
+              </div>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field pl-10"
+                placeholder={texts.auth.password}
+                required
+              />
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Lock size={16} className="text-gray-400" />
+              </div>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="input-field pl-10"
+                placeholder={texts.auth.confirmPassword}
+                required
+              />
+            </div>
+
+            <div className="flex items-center">
+              <input type="checkbox" className="rounded text-green-600 focus:ring-green-500 mr-2" required />
+              <span className="text-xs text-gray-700 dark:text-gray-300">
+                I agree to the{" "}
+                <a href="#" className="text-green-600 dark:text-green-400 hover:underline">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className="text-green-600 dark:text-green-400 hover:underline">
+                  Privacy Policy
+                </a>
+              </span>
+            </div>
+
+            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
+              {texts.auth.signUp}
+              <ArrowRight size={16} />
+            </button>
+
+            <p className="text-xs text-center text-gray-600 dark:text-gray-400">
+              {texts.auth.haveAccount}{" "}
+              <Link href="/login" className="text-green-600 dark:text-green-400 hover:underline font-medium">
+                {texts.auth.signIn}
+              </Link>
+            </p>
+          </form>
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-            <div className="text-sm text-red-700 dark:text-red-200">{error}</div>
-          </div>
-        )}
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label htmlFor="username" className="sr-only">
-                {t("username")}
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </span>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full border-0 bg-transparent p-0 pl-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-400 sm:text-sm"
-                  placeholder={t("username")}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="mobileNumber" className="sr-only">
-                {t("mobileNumber")}
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                  </svg>
-                </span>
-                <input
-                  id="mobileNumber"
-                  name="mobileNumber"
-                  type="tel"
-                  autoComplete="tel"
-                  required
-                  value={mobileNumber}
-                  onChange={(e) => setMobileNumber(e.target.value)}
-                  className="block w-full border-0 bg-transparent p-0 pl-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-400 sm:text-sm"
-                  placeholder={t("mobileNumber")}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="sr-only">
-                {t("password")}
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </span>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full border-0 bg-transparent p-0 pl-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-400 sm:text-sm"
-                  placeholder={t("password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-500 focus:outline-none dark:text-gray-400"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">
-                {t("confirmPassword")}
-              </label>
-              <div className="flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </span>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="block w-full border-0 bg-transparent p-0 pl-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-400 sm:text-sm"
-                  placeholder={t("confirmPassword")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="text-gray-500 focus:outline-none dark:text-gray-400"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
+        {/* Right side - Image */}
+        <div className="relative hidden md:block md:w-1/2 bg-green-600">
+          <Image src="/images/register-bg.png" alt="Farmer in field" fill className="object-cover opacity-90" />
+          <div className="absolute inset-0 bg-green-800/30 flex flex-col justify-center p-2">
+            <div className="bg-white/10 backdrop-blur-sm p-1 rounded-lg max-w-xs mx-auto">
+              <h2 className="text-md font-bold text-white text-center mb-2">Join Our Farming Community</h2>
+              <p className="text-xs text-white/90 text-center">
+                Create an account to access government schemes, agricultural resources, and connect with other farmers.
+              </p>
             </div>
           </div>
-
-          <div className="flex items-center">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800"
-            />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-              {t("rememberMe")}
-            </label>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-[#1e3a8a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3a8a]/90 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 disabled:opacity-70 dark:bg-[#3b82f6] dark:hover:bg-[#3b82f6]/90 dark:focus:ring-[#3b82f6]"
-            >
-              {loading ? "Loading..." : t("signUp")}
-            </button>
-          </div>
-        </form>
-
-        <div className="mt-4 text-center text-sm">
-          <span className="text-gray-600 dark:text-gray-400">{t("alreadyHaveAccount")}</span>{" "}
-          <Link
-            href="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-          >
-            {t("signIn")}
-          </Link>
         </div>
       </div>
     </div>
