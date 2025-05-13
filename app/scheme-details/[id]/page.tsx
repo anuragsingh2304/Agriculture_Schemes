@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 
 export default function SchemeDetails({ params }: { params: { id: string } }) {
-  const scheme = schemes.find((s) => s.id === params.id)
+  const scheme = schemes.find(async (s) => s.id ===  params.id)
 
   if (!scheme) {
     notFound()
