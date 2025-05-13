@@ -19,6 +19,7 @@ export interface Application {
   id: string
   schemeId: string
   applicantName: string
+  applicantId?: string
   aadharNumber: string
   status: "pending" | "approved" | "rejected"
   appliedDate: string
