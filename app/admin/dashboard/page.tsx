@@ -19,7 +19,7 @@ export default function AdminDashboard() {
 
   // Get scheme title
   const getSchemeTitle = (schemeId: string) => {
-    const scheme = schemes.find((s) => s.id === schemeId)
+    const scheme = schemes.find((s) => s._id === schemeId)
     return scheme ? scheme.title : "Unknown Scheme"
   }
 
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-md font-bold text-gray-900 dark:text-white mb-1">{texts.admin.dashboard.title}</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Welcome back, Admin! Here's what's happening with your applications.
+            Welcome back, {localStorage.getItem("userName") || "Admin" } Here's what's happening with your applications.
           </p>
         </div>
         <div className="mt-2 md:mt-0">
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                   {recentApplications.map((application) => (
-                    <tr key={application.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <tr key={application._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="px-2 py-2 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300 mr-2">
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
             </div>
             <ul className="space-y-3">
               {crops.slice(0, 4).map((crop) => (
-                <li key={crop.id} className="flex items-start">
+                <li key={crop._id} className="flex items-start">
                   <div className="bg-green-100 dark:bg-green-900/30 p-1 rounded-lg mr-3">
                     <Leaf className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>

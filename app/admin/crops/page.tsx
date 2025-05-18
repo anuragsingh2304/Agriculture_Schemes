@@ -2,13 +2,12 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { crops } from "@/utils/mockdata"
 import texts from "@/language/en.json"
 import { Plus, Edit, Trash2, Leaf } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-
 export default function AdminCrops() {
+  const [cropList, setCropList] = useState<any[]>([])
   const [cropName, setCropName] = useState("")
   const [season, setSeason] = useState("")
   const [pesticides, setPesticides] = useState("")
@@ -22,6 +21,28 @@ export default function AdminCrops() {
   const [averageYield, setAverageYield] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
+useEffect(() => {
+  // Check if admin is authenticated (in a real app, use a proper auth system)
+  const authenticated = localStorage.getItem("adminAuthenticated") === "true"
+  setIsAuthenticated(authenticated)
+  
+  // If not authenticated, redirect to login
+  if (!authenticated) {
+    router.push("/admin/login")
+  }
+  
+  // Fetch crops from backend
+  const token = localStorage.getItem("token")
+  fetch("http://localhost:8000/api/crops", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  .then(res => res.json())
+  .then(data => setCropList(data))
+  .catch(err => console.error("Failed to fetch crops:", err))
+}, [router])
+
 
   useEffect(() => {
     // Check if admin is authenticated (in a real app, use a proper auth system)
@@ -34,11 +55,11 @@ export default function AdminCrops() {
     }
   }, [router])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // This would normally handle adding a new crop
+    const token = localStorage.getItem("token")
     const formData = {
-      cropName,
+      name: cropName,
       season,
       pesticides,
       fertilizers,
@@ -46,17 +67,40 @@ export default function AdminCrops() {
       waterRequirement,
       soilType,
       growthDuration,
-      averageYield,
+      averageYield
     }
 
-    if (isEditMode) {
-      console.log("Updating crop:", editingCropId, formData)
-    } else {
-      console.log("Adding new crop:", formData)
-    }
+    try {
+      const url = isEditMode
+        ? `http://localhost:8000/api/crops/${editingCropId}`
+        : "http://localhost:8000/api/crops"
+      const method = isEditMode ? "PUT" : "POST"
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      })
 
-    // Reset form
-    resetForm()
+      const savedCrop = await res.json()
+
+      if (res.ok) {
+        if (isEditMode) {
+          setCropList((prev) =>
+            prev.map((c) => (c._id === editingCropId ? savedCrop : c))
+          )
+        } else {
+          setCropList((prev) => [...prev, savedCrop])
+        }
+        resetForm()
+      } else {
+        console.error("Error saving crop")
+      }
+    } catch (err) {
+      console.error("Error:", err)
+    }
   }
 
   const resetForm = () => {
@@ -73,23 +117,38 @@ export default function AdminCrops() {
     setEditingCropId(null)
   }
 
-  const handleEditCrop = (crop: (typeof crops)[0]) => {
-    // Populate form with crop data for editing
+  const handleEditCrop = (crop: any) => {
     setCropName(crop.name)
     setSeason(crop.season)
     setPesticides(crop.pesticides)
     setFertilizers(crop.fertilizers)
-    // In a real app, you would set other fields here too
+    setCropType(crop.cropType)
+    setWaterRequirement(crop.waterRequirement)
+    setSoilType(crop.soilType)
+    setGrowthDuration(crop.growthDuration)
+    setAverageYield(crop.averageYield)
     setIsEditMode(true)
-    setEditingCropId(crop.id)
-
-    // Scroll to form
+    setEditingCropId(crop._id)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const handleDeleteCrop = (cropId: string) => {
-    // This would normally delete the crop
-    console.log("Deleting crop:", cropId)
+  const handleDeleteCrop = async (cropId: string) => {
+    const token = localStorage.getItem("token")
+    try {
+      const res = await fetch(`http://localhost:8000/api/crops/${cropId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      if (res.ok) {
+        setCropList((prev) => prev.filter((crop) => crop._id !== cropId))
+      } else {
+        console.error("Failed to delete crop")
+      }
+    } catch (err) {
+      console.error("Error deleting crop:", err)
+    }
   }
 
   // Generate a background image query based on the crop name
@@ -160,6 +219,8 @@ export default function AdminCrops() {
                   <option value="fruit">Fruit Crop</option>
                   <option value="cash">Cash Crop</option>
                   <option value="plantation">Plantation Crop</option>
+                  <option value="Fiber">Fiber Crop</option>
+                  <option value="Tuber">Tuber Crop</option>
                 </select>
               </div>
 
@@ -228,7 +289,7 @@ export default function AdminCrops() {
                   Growth Duration (Days) *
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   id="growthDuration"
                   value={growthDuration}
                   onChange={(e) => setGrowthDuration(e.target.value)}
@@ -301,13 +362,13 @@ export default function AdminCrops() {
         <div className="lg:col-span-2">
           <div className="card p-1">
             <h2 className="section-title border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
-              Crop List ({crops.length})
+              Crop List ({cropList.length})
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {crops.map((crop) => (
+              {cropList.map((crop) => (
                 <div
-                  key={crop.id}
+                  key={crop._id}
                   className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden hover:shadow-md transition-shadow"
                 >
                   <div className="h-32 relative">
@@ -336,7 +397,7 @@ export default function AdminCrops() {
                         </button>
                         <button
                           className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                          onClick={() => handleDeleteCrop(crop.id)}
+                          onClick={() => handleDeleteCrop(crop._id)}
                         >
                           <Trash2 size={14} />
                         </button>

@@ -15,23 +15,43 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setIsLoading(true)
 
-    // Mock authentication - in a real app, this would be an API call
-    setTimeout(() => {
-      // For demo purposes, accept any non-empty email/password
-      if (email && password) {
-        // Store authentication state (in a real app, use a proper auth system)
-        localStorage.setItem("userAuthenticated", "true")
-        router.push("/user/dashboard")
-      } else {
-        setError("Invalid email or password")
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed")
       }
-      setIsLoading(false)
-    }, 1000)
+
+      // Save token and basic user info to localStorage
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("userAuthenticated", "true")
+      localStorage.setItem("userName", data.user.name)
+      localStorage.setItem("userRole", data.user.role)
+
+      // Redirect based on role
+      if (data.user.role === "admin") {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/user/dashboard")
+      }
+    } catch (err: any) {
+      setError(err.message)
+    }
+
+    setIsLoading(false)
   }
 
   return (

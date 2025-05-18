@@ -8,30 +8,52 @@ import Image from "next/image"
 import { Lock, User, ArrowRight, AlertCircle } from "lucide-react"
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
-
-    // Mock authentication - in a real app, this would be an API call
-    setTimeout(() => {
-      // For demo purposes, accept any non-empty username/password
-      if (username && password) {
-        // Store authentication state (in a real app, use a proper auth system)
-        localStorage.setItem("adminAuthenticated", "true")
-        router.push("/admin/dashboard")
-      } else {
-        setError("Invalid username or password")
-      }
-      setIsLoading(false)
-    }, 1000)
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault()
+     setError("")
+     setIsLoading(true)
+ 
+     try {
+       const res = await fetch("http://localhost:8000/api/auth/admin/login", {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json"
+         },
+         body: JSON.stringify({ email, password })
+       })
+ 
+       const data = await res.json()
+ 
+       if (!res.ok) {
+         console.log(res.status)
+         throw new Error(data.message || "Login failed")
+       }
+ 
+       // Save token and basic user info to localStorage
+       localStorage.setItem("token", data.token)
+       localStorage.setItem("userAuthenticated", "false")
+       localStorage.setItem("adminAuthenticated", "true")
+       localStorage.setItem("userName", data.user.name)
+       localStorage.setItem("userRole", data.user.role)
+ 
+       // Redirect based on role
+       if (data.user.role === "admin") {
+         router.push("/admin/dashboard")
+       } else {
+         router.push("/user/dashboard")
+       }
+     } catch (err: any) {
+       setError(err.message)
+     }
+ 
+     setIsLoading(false)
+   }
 
   return (
     <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-12rem)]">
@@ -62,11 +84,11 @@ export default function AdminLogin() {
               </div>
               <input
                 type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="input-field pl-10"
-                placeholder="Username"
+                placeholder="Email"
                 required
               />
             </div>

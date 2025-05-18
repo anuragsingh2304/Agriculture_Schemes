@@ -1,9 +1,13 @@
-import { schemes } from "@/utils/mockdata"
+import type { Scheme } from "@/utils/mockdata"
 import SchemeCard from "@/components/SchemeCard"
 import Image from "next/image"
 import { Search, Filter } from "lucide-react"
 
-export default function SchemesPage() {
+export default async function SchemesPage() {
+    const res = await fetch("http://localhost:8000/api/schemes", {
+      cache: "no-store"
+    })
+    const schemes: Scheme[] = await res.json()
   return (
     <div className="w-full">
       {/* Hero Section - Full Width */}
@@ -62,7 +66,7 @@ export default function SchemesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {schemes.map((scheme) => (
-              <SchemeCard key={scheme.id} scheme={scheme} />
+              <SchemeCard key={scheme._id} scheme={scheme} />
             ))}
           </div>
         </div>

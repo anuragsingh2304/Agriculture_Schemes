@@ -18,7 +18,7 @@ export default function SchemeCard({ scheme }: SchemeCardProps) {
     "bg-red-100 text-red-600",
   ]
 
-  const colorIndex = Number.parseInt(scheme.id) % colors.length
+  const colorIndex = Number.parseInt(scheme._id) % colors.length
   const colorClass = colors[colorIndex]
 
   // Get first letter of scheme title for the icon
@@ -90,7 +90,7 @@ export default function SchemeCard({ scheme }: SchemeCardProps) {
           )}
         </div>
 
-        <Link href={`/scheme-details/${scheme.id}`} className="btn-primary inline-flex items-center gap-1 group">
+        <Link href={`/scheme-details/${scheme._id}`} className="btn-primary inline-flex items-center gap-1 group">
           {texts.common.readMore}
           <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
         </Link>

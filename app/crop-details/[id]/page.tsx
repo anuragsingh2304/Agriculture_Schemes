@@ -1,15 +1,14 @@
-import { crops } from "@/utils/mockdata"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import { Calendar, Droplets, Leaf, Thermometer, Sprout, ArrowLeft } from "lucide-react"
 
-export default function CropDetails({ params }: { params: { id: string } }) {
-  const crop = crops.find((c) => c.id === params.id)
-
-  if (!crop) {
-    notFound()
-  }
+export default async function CropDetails({ params }: { params: { id: string } }) {
+  const res = await fetch(`http://localhost:8000/api/crops/${params.id}`, {
+    cache: "no-store"
+  })
+  if (!res.ok) notFound()
+  const crop = await res.json()
 
   // Generate a background image query based on the crop name
   const imageQuery = encodeURIComponent(`farming ${crop.name.toLowerCase()} field`)

@@ -4,8 +4,9 @@ import type React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import texts from "@/language/en.json"
-import { Mail, Lock, User, Phone, ArrowRight } from "lucide-react"
+import { Mail, Lock, User, Phone, ArrowRight, AlertCircle } from "lucide-react"
 
 export default function Register() {
   const [name, setName] = useState("")
@@ -13,11 +14,29 @@ export default function Register() {
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [error , setError] = useState();
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // This would normally handle registration logic
-    console.log("Registration attempt with:", { name, email, phone, password, confirmPassword })
+
+    try {const res = await fetch("http://localhost:8000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({name, email, password, phone})
+    });
+    const data = await res.json();
+    if(!res.ok) {
+      throw new Error(data.message || "Registration failed");
+    }
+
+    router.push("/login")
+  
+  } catch (err: any) {
+    setError(err.message)
+  }
   }
 
   return (
@@ -32,6 +51,13 @@ export default function Register() {
           <h1 className="text-md font-bold text-gray-900 dark:text-white text-center mb-6">
             {texts.auth.registerTitle}
           </h1>
+
+           {error && (
+            <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4 flex items-center gap-2">
+              <AlertCircle size={16} />
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">

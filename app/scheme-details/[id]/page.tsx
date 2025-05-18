@@ -1,4 +1,3 @@
-import { schemes } from "@/utils/mockdata"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import texts from "@/language/en.json"
@@ -16,12 +15,14 @@ import {
   Target,
 } from "lucide-react"
 
-export default function SchemeDetails({ params }: { params: { id: string } }) {
-  const scheme = schemes.find(async (s) => s.id ===  params.id)
+export default async function SchemeDetails({ params }: { params: { id: string } }) {
+  const res = await fetch(`http://localhost:8000/api/schemes/${params.id}`, {
+    cache: "no-store"
+  })
 
-  if (!scheme) {
-    notFound()
-  }
+  if (!res.ok) notFound()
+
+  const scheme = await res.json()
 
   // Generate a background image query based on the scheme title
   const imageQuery = encodeURIComponent(`agricultural field related to ${scheme.title.toLowerCase()}`)
@@ -158,7 +159,7 @@ export default function SchemeDetails({ params }: { params: { id: string } }) {
             </h2>
 
             <ul className="space-y-3 mb-6">
-              {scheme.documents.map((doc, index) => (
+              {scheme.documents.map((doc: String, index: number) => (
                 <li key={index} className="flex items-start">
                   <CheckCircle size={16} className="text-green-600 dark:text-green-400 mt-0.5 mr-2 flex-shrink-0" />
                   <span className="text-sm text-gray-700 dark:text-gray-300">{doc}</span>
@@ -179,7 +180,7 @@ export default function SchemeDetails({ params }: { params: { id: string } }) {
                 <ArrowLeft size={16} />
                 {texts.common.back}
               </Link>
-              <Link href={`/apply/${scheme.id}`} className="btn-primary flex items-center gap-1">
+              <Link href={`/apply/${scheme._id}`} className="btn-primary flex items-center gap-1">
                 {texts.common.applyNow}
                 <ArrowRight size={16} />
               </Link>

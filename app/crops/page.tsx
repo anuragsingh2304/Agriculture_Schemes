@@ -1,9 +1,18 @@
-import { crops } from "@/utils/mockdata"
+import type { Crop } from "@/utils/mockdata"
 import Link from "next/link"
 import Image from "next/image"
 import { Leaf, ArrowRight } from "lucide-react"
+import { useEffect } from "react"
 
-export default function CropsPage() {
+export default async function CropsPage() {
+  const res = await fetch("http://localhost:8000/api/crops", {
+    method: "GET",
+    cache: "no-store"
+  })
+
+  const crops: Crop[] = await res.json();
+
+
   // Generate image query based on crop name
   const getImageQuery = (cropName: string) => {
     return encodeURIComponent(`farming ${cropName.toLowerCase()} field`)
@@ -31,7 +40,7 @@ export default function CropsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {crops.map((crop) => (
-              <div key={crop.id} className="card hover:shadow-lg transition-shadow overflow-hidden">
+              <div key={crop._id} className="card hover:shadow-lg transition-shadow overflow-hidden">
                 <div className="h-40 relative">
                   <Image
                     src={crop.imageUrl || `/placeholder.svg?height=200&width=400&query=${getImageQuery(crop.name)}`}
@@ -64,7 +73,7 @@ export default function CropsPage() {
                     </p>
                   </div>
 
-                  <Link href={`/crop-details/${crop.id}`} className="btn-primary inline-flex items-center gap-1 group">
+                  <Link href={`/crop-details/${crop._id}`} className="btn-primary inline-flex items-center gap-1 group">
                     View Details
                     <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                   </Link>

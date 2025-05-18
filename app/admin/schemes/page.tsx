@@ -1,14 +1,15 @@
 "use client"
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
-import { schemes } from "@/utils/mockdata"
 import texts from "@/language/en.json"
 import { Plus, Trash2, Edit, ImageIcon } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import type React from "react"
+import { useState, useRef, useEffect } from "react"
+
 
 export default function AdminSchemes() {
+  const [schemeList, setSchemeList] = useState<any[]>([])
   const [title, setTitle] = useState("")
   const [shortDescription, setShortDescription] = useState("")
   const [fullDescription, setFullDescription] = useState("")
@@ -27,6 +28,15 @@ export default function AdminSchemes() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const [state, setState] = useState("")
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    fetch("http://localhost:8000/api/schemes", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setSchemeList(data))
+      .catch(err => console.error("Failed to fetch schemes:", err))
+  }, [])
 
   useEffect(() => {
     // Check if admin is authenticated (in a real app, use a proper auth system)
@@ -60,8 +70,11 @@ export default function AdminSchemes() {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const token = localStorage.getItem("token")
+
     const formData = {
       title,
       shortDescription,
@@ -69,24 +82,46 @@ export default function AdminSchemes() {
       eligibility,
       benefits,
       documents: documents.split(",").map((doc) => doc.trim()),
-      image: schemeImage,
+      imageUrl: schemeImage || "",
       schemeType,
       fundingSource,
       implementingAgency,
       targetGroup,
       applicationDeadline,
-      state: schemeType === "state" ? state : undefined,
+      state: schemeType === "state" ? state : undefined
     }
 
-    // This would normally handle adding or updating a scheme
-    if (isEditMode) {
-      console.log("Updating scheme:", editingSchemeId, formData)
-    } else {
-      console.log("Adding new scheme:", formData)
-    }
+    try {
+      const url = isEditMode
+        ? `http://localhost:8000/api/schemes/${editingSchemeId}`
+        : "http://localhost:8000/api/schemes"
+      const method = isEditMode ? "PUT" : "POST"
 
-    // Reset form
-    resetForm()
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.message || "Failed to save scheme")
+
+      if (isEditMode) {
+        setSchemeList((prev) =>
+          prev.map((s) => (s._id === editingSchemeId ? data : s))
+        )
+      } else {
+        setSchemeList((prev) => [...prev, data])
+      }
+
+      resetForm()
+    } catch (err) {
+      console.error("Failed to submit scheme:", err)
+    }
   }
 
   const resetForm = () => {
@@ -107,25 +142,40 @@ export default function AdminSchemes() {
     setState("")
   }
 
-  const handleEditScheme = (scheme: (typeof schemes)[0]) => {
-    // Populate form with scheme data for editing
+  const handleEditScheme = (scheme: any) => {
     setTitle(scheme.title)
     setShortDescription(scheme.shortDescription)
     setFullDescription(scheme.fullDescription)
     setEligibility(scheme.eligibility)
     setBenefits(scheme.benefits)
     setDocuments(scheme.documents.join(", "))
-    // In a real app, you would set the image and other fields here too
+    setSchemeImage(scheme.imageUrl || null)
+    setSchemeType(scheme.schemeType)
+    setFundingSource(scheme.fundingSource)
+    setImplementingAgency(scheme.implementingAgency)
+    setTargetGroup(scheme.targetGroup)
+    setApplicationDeadline(scheme.applicationDeadline)
+    setState(scheme.state || "")
     setIsEditMode(true)
-    setEditingSchemeId(scheme.id)
-
-    // Scroll to form
+    setEditingSchemeId(scheme._id)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const handleDeleteScheme = (schemeId: string) => {
-    // This would normally delete the scheme
-    console.log("Deleting scheme:", schemeId)
+  const handleDeleteScheme = async (schemeId: string) => {
+    const token = localStorage.getItem("token")
+    try {
+      const res = await fetch(`http://localhost:8000/api/schemes/${schemeId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        setSchemeList((prev) => prev.filter((s) => s._id !== schemeId))
+      } else {
+        console.error("Failed to delete scheme")
+      }
+    } catch (err) {
+      console.error("Error deleting scheme:", err)
+    }
   }
 
   if (!isAuthenticated) {
@@ -451,20 +501,20 @@ export default function AdminSchemes() {
         <div className="lg:col-span-2">
           <div className="card p-1">
             <h2 className="section-title border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
-              Scheme List ({schemes.length})
+              Scheme List ({schemeList.length})
             </h2>
 
             <div className="space-y-4">
-              {schemes.map((scheme) => (
+              {schemeList.map((scheme) => (
                 <div
-                  key={scheme.id}
+                  key={scheme._id}
                   className="border border-gray-200 dark:border-gray-700 rounded-md p-1 hover:shadow-md transition-shadow"
                 >
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="sm:w-1/4 relative">
                       <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden relative">
                         <Image
-                          src={`/agricultural-scheme.png?height=200&width=400&query=agricultural scheme related to ${scheme.title.toLowerCase()}`}
+                          src={scheme.imageUrl || `/agricultural-scheme.png?height=200&width=400&query=agricultural scheme related to ${scheme.title?.toLowerCase?.() || ""}`}
                           alt={scheme.title}
                           fill
                           className="object-cover"
@@ -484,7 +534,7 @@ export default function AdminSchemes() {
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 mb-2">{scheme.shortDescription}</p>
 
                       <div className="flex flex-wrap gap-1 mb-2">
-                        {scheme.documents.slice(0, 3).map((doc, index) => (
+                        {scheme.documents.slice(0, 3).map((doc: String, index: any) => (
                           <span
                             key={index}
                             className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full"
@@ -509,7 +559,7 @@ export default function AdminSchemes() {
                         </button>
                         <button
                           className="text-xs text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
-                          onClick={() => handleDeleteScheme(scheme.id)}
+                          onClick={() => handleDeleteScheme(scheme._id)}
                         >
                           <Trash2 size={14} />
                           Delete

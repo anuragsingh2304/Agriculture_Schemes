@@ -1,5 +1,5 @@
 export interface Scheme {
-  id: string
+  _id: string
   title: string
   shortDescription: string
   fullDescription: string
@@ -16,7 +16,7 @@ export interface Scheme {
 }
 
 export interface Application {
-  id: string
+  _id: string
   schemeId: string
   applicantName: string
   applicantId?: string
@@ -26,7 +26,7 @@ export interface Application {
 }
 
 export interface Crop {
-  id: string
+  _id: string
   name: string
   season: string
   pesticides: string
@@ -41,7 +41,7 @@ export interface Crop {
 
 export const schemes: Scheme[] = [
   {
-    id: "1",
+    _id: "1",
     title: "PM-KISAN Scheme",
     shortDescription: "Financial assistance of ₹6,000 per year to eligible farmer families.",
     fullDescription:
@@ -57,7 +57,7 @@ export const schemes: Scheme[] = [
     applicationDeadline: "2023-12-31",
   },
   {
-    id: "2",
+    _id: "2",
     title: "Pradhan Mantri Fasal Bima Yojana",
     shortDescription: "Crop insurance scheme providing financial support to farmers suffering crop loss/damage.",
     fullDescription:
@@ -73,7 +73,7 @@ export const schemes: Scheme[] = [
     targetGroup: "All Farmers",
   },
   {
-    id: "3",
+    _id: "3",
     title: "Soil Health Card Scheme",
     shortDescription: "Provides information on soil health to farmers to help improve productivity.",
     fullDescription:
@@ -86,7 +86,7 @@ export const schemes: Scheme[] = [
     implementingAgency: "Department of Agriculture, Cooperation & Farmers Welfare",
   },
   {
-    id: "4",
+    _id: "4",
     title: "National Mission for Sustainable Agriculture",
     shortDescription: "Promotes sustainable agriculture through climate change adaptation measures.",
     fullDescription:
@@ -99,7 +99,7 @@ export const schemes: Scheme[] = [
     fundingSource: "Ministry of Agriculture & Farmers Welfare",
   },
   {
-    id: "5",
+    _id: "5",
     title: "Paramparagat Krishi Vikas Yojana",
     shortDescription: "Promotes organic farming practices and certification.",
     fullDescription:
@@ -110,7 +110,7 @@ export const schemes: Scheme[] = [
     schemeType: "central",
   },
   {
-    id: "6",
+    _id: "6",
     title: "Maharashtra State Agricultural Marketing Board Scheme",
     shortDescription: "Supports farmers in Maharashtra with marketing and infrastructure.",
     fullDescription:
@@ -126,7 +126,7 @@ export const schemes: Scheme[] = [
     applicationDeadline: "2023-11-30",
   },
   {
-    id: "7",
+    _id: "7",
     title: "Karnataka Krishi Yantra Dhare Yojane",
     shortDescription: "Farm equipment rental scheme for farmers in Karnataka.",
     fullDescription:
@@ -144,7 +144,7 @@ export const schemes: Scheme[] = [
 
 export const applications: Application[] = [
   {
-    id: "app1",
+    _id: "app1",
     schemeId: "1",
     applicantName: "Rajesh Kumar",
     aadharNumber: "XXXX-XXXX-1234",
@@ -152,7 +152,7 @@ export const applications: Application[] = [
     appliedDate: "2023-10-15",
   },
   {
-    id: "app2",
+    _id: "app2",
     schemeId: "2",
     applicantName: "Suresh Patel",
     aadharNumber: "XXXX-XXXX-5678",
@@ -160,7 +160,7 @@ export const applications: Application[] = [
     appliedDate: "2023-09-22",
   },
   {
-    id: "app3",
+    _id: "app3",
     schemeId: "3",
     applicantName: "Priya Singh",
     aadharNumber: "XXXX-XXXX-9012",
@@ -168,7 +168,7 @@ export const applications: Application[] = [
     appliedDate: "2023-10-05",
   },
   {
-    id: "app4",
+    _id: "app4",
     schemeId: "1",
     applicantName: "Amit Sharma",
     aadharNumber: "XXXX-XXXX-3456",
@@ -176,7 +176,7 @@ export const applications: Application[] = [
     appliedDate: "2023-10-18",
   },
   {
-    id: "app5",
+    _id: "app5",
     schemeId: "4",
     applicantName: "Neha Verma",
     aadharNumber: "XXXX-XXXX-7890",
@@ -187,7 +187,7 @@ export const applications: Application[] = [
 
 export const crops: Crop[] = [
   {
-    id: "crop1",
+    _id: "crop1",
     name: "Rice",
     season: "Kharif",
     pesticides: "Carbofuran, Chlorpyrifos",
@@ -199,7 +199,7 @@ export const crops: Crop[] = [
     averageYield: "25-30",
   },
   {
-    id: "crop2",
+    _id: "crop2",
     name: "Wheat",
     season: "Rabi",
     pesticides: "Chlorpyrifos, Cypermethrin",
@@ -211,7 +211,7 @@ export const crops: Crop[] = [
     averageYield: "35-40",
   },
   {
-    id: "crop3",
+    _id: "crop3",
     name: "Cotton",
     season: "Kharif",
     pesticides: "Imidacloprid, Acephate",
@@ -223,7 +223,7 @@ export const crops: Crop[] = [
     averageYield: "15-20",
   },
   {
-    id: "crop4",
+    _id: "crop4",
     name: "Sugarcane",
     season: "Year-round",
     pesticides: "Fipronil, Chlorantraniliprole",
@@ -235,7 +235,7 @@ export const crops: Crop[] = [
     averageYield: "700-800",
   },
   {
-    id: "crop5",
+    _id: "crop5",
     name: "Maize",
     season: "Kharif/Rabi",
     pesticides: "Deltamethrin, Lambda-cyhalothrin",

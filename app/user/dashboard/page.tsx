@@ -84,7 +84,7 @@ export default function UserDashboard() {
 
   // Get scheme title
   const getSchemeTitle = (schemeId: string) => {
-    const scheme = schemes.find((s) => s.id === schemeId)
+    const scheme = schemes.find((s) => s._id === schemeId)
     return scheme ? scheme.title : "Unknown Scheme"
   }
 
@@ -309,7 +309,7 @@ export default function UserDashboard() {
                       </thead>
                       <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                         {userApplications.map((application) => (
-                          <tr key={application.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <tr key={application._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
                                 {getSchemeTitle(application.schemeId)}
@@ -329,7 +329,7 @@ export default function UserDashboard() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <Link
-                                href={`/user/applications/${application.id}`}
+                                href={`/user/applications/${application._id}`}
                                 className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                               >
                                 View
@@ -358,7 +358,7 @@ export default function UserDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {schemes.slice(0, 3).map((scheme) => (
                     <div
-                      key={scheme.id}
+                      key={scheme._id}
                       className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
                     >
                       <div className="h-40 relative">
@@ -398,13 +398,13 @@ export default function UserDashboard() {
                         </p>
                         <div className="flex justify-between items-center">
                           <Link
-                            href={`/scheme-details/${scheme.id}`}
+                            href={`/scheme-details/${scheme._id}`}
                             className="text-sm text-green-600 dark:text-green-400 hover:underline"
                           >
                             View Details
                           </Link>
                           <Link
-                            href={`/apply/${scheme.id}`}
+                            href={`/apply/${scheme._id}`}
                             className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md transition-colors"
                           >
                             Apply Now
@@ -486,10 +486,10 @@ export default function UserDashboard() {
                     </thead>
                     <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                       {applications.map((application) => (
-                        <tr key={application.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <tr key={application._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {application.id.toUpperCase()}
+                              {application._id.toUpperCase()}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -511,7 +511,7 @@ export default function UserDashboard() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <Link
-                              href={`/user/applications/${application.id}`}
+                              href={`/user/applications/${application._id}`}
                               className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                             >
                               View Details
@@ -553,7 +553,7 @@ export default function UserDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {schemes.map((scheme) => (
                   <div
-                    key={scheme.id}
+                    key={scheme._id}
                     className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
                   >
                     <div className="h-40 relative">
@@ -593,13 +593,13 @@ export default function UserDashboard() {
                       </p>
                       <div className="flex justify-between items-center">
                         <Link
-                          href={`/scheme-details/${scheme.id}`}
+                          href={`/scheme-details/${scheme._id}`}
                           className="text-sm text-green-600 dark:text-green-400 hover:underline"
                         >
                           View Details
                         </Link>
                         <Link
-                          href={`/apply/${scheme.id}`}
+                          href={`/apply/${scheme._id}`}
                           className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md transition-colors"
                         >
                           Apply Now

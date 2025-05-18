@@ -44,6 +44,10 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem("userAuthenticated")
     localStorage.removeItem("adminAuthenticated")
+    localStorage.removeItem("userName")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("token")
+
     setIsAuthenticated(false)
     setIsAdminAuthenticated(false)
     router.push("/")
@@ -169,7 +173,7 @@ export default function Header() {
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
-            {isAuthenticated ? (
+            {isAuthenticated || isAdminAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => {
@@ -179,39 +183,52 @@ export default function Header() {
                   className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-sm font-bold text-green-600 dark:text-green-400">
-                    R
+                    {isAdminAuthenticated ? localStorage.getItem("userName")?.charAt(0) || "A" : localStorage.getItem("userName")?.charAt(0) || "R"}
                   </div>
-                  <span className="hidden sm:inline">Rajesh</span>
+                  <span className="hidden sm:inline">
+                    {isAdminAuthenticated ? localStorage.getItem("userName") || "Admin" : localStorage.getItem("userName") || "User"}
+                  </span>
                   <ChevronDown size={14} className={`transition-transform ${isUserDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 {isUserDropdownOpen && (
                   <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
-                    <Link
-                      href="/user/dashboard"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                    >
-                      <LayoutDashboard size={16} />
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/user/profile"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                    >
-                      <User size={16} />
-                      Profile
-                    </Link>
-                    <Link
-                      href="/user/notifications"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                    >
-                      <Bell size={16} />
-                      Notifications
-                    </Link>
-                    <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                    {isAuthenticated && (
+                      <>
+                        <Link
+                          href="/user/dashboard"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                        >
+                          <LayoutDashboard size={16} />
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/user/profile"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                        >
+                          <User size={16} />
+                          Profile
+                        </Link>
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                      </>
+                    )}
+
+                    {isAdminAuthenticated && (
+                      <>
+                        <Link
+                          href="/admin/dashboard"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                        >
+                          <LayoutDashboard size={16} />
+                          Admin Dashboard
+                        </Link>
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                      </>
+                    )}
+
                     <button
                       onClick={() => {
                         handleLogout()
@@ -227,6 +244,12 @@ export default function Header() {
               </div>
             ) : (
               <div className="hidden md:flex items-center gap-2">
+                <Link
+                  href="admin/login"
+                  className="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {texts.common.admin}
+                </Link>
                 <Link
                   href="/login"
                   className="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -305,7 +328,7 @@ export default function Header() {
               {isAdminAuthenticated && (
                 <>
                   <div className="border-t border-gray-200 dark:border-gray-700 my-2 px-4"></div>
-                  <p className="px-4 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Admin</p>
+                  <p className="px-4 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{localStorage.getItem("userName") || "Admin"}</p>
                   <Link
                     href="/admin/dashboard"
                     className={`flex items-center gap-2 px-4 py-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium ${getActiveClass(
@@ -352,6 +375,14 @@ export default function Header() {
               {!isAuthenticated && (
                 <>
                   <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                  <Link
+                    href="admin/login"
+                    className="flex items-center gap-2 px-4 py-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <LogIn size={18} />
+                    {texts.common.admin}
+                  </Link>
                   <Link
                     href="/login"
                     className="flex items-center gap-2 px-4 py-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300"

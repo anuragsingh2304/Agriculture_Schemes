@@ -1,10 +1,14 @@
-import { schemes } from "@/utils/mockdata"
 import SchemeCard from "@/components/SchemeCard"
 import texts from "@/language/en.json"
 import Image from "next/image"
 import Link from "next/link"
+import type { Scheme } from "@/utils/mockdata"
 
-export default function Home() {
+export default async function Home() {
+  const res = await fetch("http://localhost:8000/api/schemes", {
+    cache: "no-store"
+  })
+  const schemes: Scheme[] = await res.json()
   return (
     <div className="w-full overflow-x-hidden">
       {/* Hero Section - Full Width */}
@@ -61,7 +65,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {schemes.map((scheme) => (
-              <SchemeCard key={scheme.id} scheme={scheme} />
+              <SchemeCard key={scheme._id} scheme={scheme} />
             ))}
           </div>
         </section>
@@ -75,8 +79,8 @@ export default function Home() {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Our experts can guide you through the application process
             </p>
-            <Link href="/register" className="btn-primary">
-              Register Now
+            <Link href="/" className="btn-primary">
+              book Call
             </Link>
           </div>
         </section>

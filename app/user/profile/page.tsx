@@ -8,24 +8,11 @@ import { User, Mail, Phone, MapPin, CreditCard, Calendar, Save, Building } from 
 
 export default function ProfilePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isEditing, setIsEditing] = useState(true) // Start in editing mode
+  const [isEditing, setIsEditing] = useState(false) // Start in view mode
   const router = useRouter()
 
-  // Mock user data
-  const [userData, setUserData] = useState({
-    name: "Rajesh Kumar",
-    email: "rajesh.kumar@example.com",
-    phone: "+91 98765 43210",
-    address: "Village Sundarpur, District Varanasi, Uttar Pradesh - 221001",
-    aadharNumber: "XXXX-XXXX-1234",
-    dateOfBirth: "15/05/1985",
-    landHolding: "5 acres",
-    bankAccount: "XXXX-XXXX-XXXX-5678",
-    ifscCode: "SBIN0001234",
-    bankName: "State Bank of India",
-    education: "High School",
-    farmingExperience: "15 years",
-  })
+  const [userData, setUserData] = useState<any>(null)
+  const [renderUpdate, setRenderUpdate] = useState();
 
   useEffect(() => {
     // Check if user is authenticated
@@ -36,21 +23,79 @@ export default function ProfilePage() {
     if (!authenticated) {
       router.push("/login")
     }
-  }, [router])
+
+    // Fetch user profile data if authenticated
+    const token = localStorage.getItem("token")
+    if (token) {
+      fetch("http://localhost:8000/api/user/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          setUserData({
+            ...data,
+            ...(data.profile || {}),
+            ...(data.bank || {})
+          })
+        })
+        .catch(err => console.error("Failed to fetch profile:", err))
+    }
+  }, [router, renderUpdate])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setUserData((prev) => ({
+    setUserData((prev: any) => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }))
+
   }
 
-  const handleSave = () => {
-    // In a real app, you would save the data to a database
-    // For now, we'll just toggle the editing state
+  const handleSave = async () => {
     setIsEditing(false)
-    router.push("/user/dashboard")
+    const token = localStorage.getItem("token")
+
+    const updatedPayload = {
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      profile: {
+        dateOfBirth: userData.dateOfBirth,
+        address: userData.address,
+        aadharNumber: userData.aadharNumber,
+        landHolding: userData.landHolding,
+        education: userData.education,
+        farmingExperience: userData.farmingExperience
+      },
+      bank: {
+        bankName: userData.bankName,
+        bankAccount: userData.bankAccount,
+        ifscCode: userData.ifscCode
+      }
+    }
+
+    try {
+      const res = await fetch("http://localhost:8000/api/user/profile/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedPayload)
+      })
+
+      if (!res.ok) {
+        throw new Error("Failed to update profile")
+      }
+
+      const updatedData = await res.json()
+      setUserData(updatedData)
+      setRenderUpdate(userData)
+    } catch (error) {
+      console.error("Update error:", error)
+    }
   }
 
   const handleCancel = () => {
@@ -65,6 +110,10 @@ export default function ProfilePage() {
         <p>Please login to access your profile...</p>
       </div>
     )
+  }
+
+  if (!userData) {
+    return <div className="text-center py-10">Loading profile...</div>
   }
 
   return (
@@ -99,7 +148,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="name"
-                      value={userData.name}
+                      value={userData.name || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
@@ -119,14 +168,14 @@ export default function ProfilePage() {
                     <input
                       type="email"
                       name="email"
-                      value={userData.email}
+                      value={userData.email || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
                   ) : (
                     <div className="flex items-start gap-3">
                       <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <span className="text-gray-900 dark:text-white">{userData.email}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.email || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -139,14 +188,14 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="phone"
-                      value={userData.phone}
+                      value={userData.phone || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
                   ) : (
                     <div className="flex items-start gap-3">
                       <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <span className="text-gray-900 dark:text-white">{userData.phone}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.phone || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -159,7 +208,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="dateOfBirth"
-                      value={userData.dateOfBirth}
+                      value={userData.dateOfBirth || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
@@ -175,10 +224,20 @@ export default function ProfilePage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Aadhar Number
                   </label>
-                  <div className="flex items-start gap-3">
-                    <CreditCard className="w-5 h-5 text-gray-400 mt-0.5" />
-                    <span className="text-gray-900 dark:text-white">{userData.aadharNumber}</span>
-                  </div>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="aadharNumber"
+                      value={userData.aadharNumber || ""}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
+                    />
+                  ) : (
+                    <div className="flex items-start gap-3">
+                      <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <span className="text-gray-900 dark:text-white">{userData.aadharNumber}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -189,7 +248,7 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <textarea
                       name="address"
-                      value={userData.address}
+                      value={userData.address || ""}
                       onChange={handleInputChange}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
@@ -197,7 +256,7 @@ export default function ProfilePage() {
                   ) : (
                     <div className="flex items-start gap-3">
                       <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <span className="text-gray-900 dark:text-white">{userData.address}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.address || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -210,13 +269,13 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="landHolding"
-                      value={userData.landHolding}
+                      value={userData.landHolding || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
                   ) : (
                     <div className="flex items-start gap-3">
-                      <span className="text-gray-900 dark:text-white">{userData.landHolding}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.landHolding || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -227,13 +286,13 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="education"
-                      value={userData.education}
+                      value={userData.education || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
                   ) : (
                     <div className="flex items-start gap-3">
-                      <span className="text-gray-900 dark:text-white">{userData.education}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.education || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -246,13 +305,13 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="farmingExperience"
-                      value={userData.farmingExperience}
+                      value={userData.farmingExperience || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
                   ) : (
                     <div className="flex items-start gap-3">
-                      <span className="text-gray-900 dark:text-white">{userData.farmingExperience}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.farmingExperience || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -270,14 +329,14 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="bankName"
-                      value={userData.bankName}
+                      value={userData.bankName || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
                   ) : (
                     <div className="flex items-start gap-3">
                       <Building className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <span className="text-gray-900 dark:text-white">{userData.bankName}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.bankName || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -290,14 +349,14 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="bankAccount"
-                      value={userData.bankAccount}
+                      value={userData.bankAccount || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
                   ) : (
                     <div className="flex items-start gap-3">
                       <CreditCard className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <span className="text-gray-900 dark:text-white">{userData.bankAccount}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.bankAccount || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -308,13 +367,13 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="ifscCode"
-                      value={userData.ifscCode}
+                      value={userData.ifscCode || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
                     />
                   ) : (
                     <div className="flex items-start gap-3">
-                      <span className="text-gray-900 dark:text-white">{userData.ifscCode}</span>
+                      <span className="text-gray-900 dark:text-white">{userData.ifscCode || "Not Available"}</span>
                     </div>
                   )}
                 </div>
@@ -324,10 +383,18 @@ export default function ProfilePage() {
             {/* Save Button */}
             <div className="mt-8 flex justify-end gap-3">
               <button
-                onClick={handleCancel}
+                onClick={() => {
+                  if (isEditing) {
+                    // Reset form and exit editing mode
+                    setIsEditing(false)
+                    router.push("/user/dashboard")
+                  } else {
+                    setIsEditing(true)
+                  }
+                }}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium"
               >
-                Cancel
+                {isEditing ? "Cancel" : "Edit"}
               </button>
               <button
                 onClick={handleSave}
