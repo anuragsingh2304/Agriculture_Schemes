@@ -35,7 +35,6 @@ export default function Login() {
         throw new Error(data.message || "Login failed")
       }
 
-      // Save token and basic user info to localStorage
       localStorage.setItem("token", data.token)
       localStorage.setItem("userAuthenticated", "true")
       localStorage.setItem("userName", data.user.name)

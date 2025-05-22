@@ -10,7 +10,7 @@ export default async function CropDetails({ params }: { params: { id: string } }
   if (!res.ok) notFound()
   const crop = await res.json()
 
-  // Generate a background image query based on the crop name
+
   const imageQuery = encodeURIComponent(`farming ${crop.name.toLowerCase()} field`)
 
   return (

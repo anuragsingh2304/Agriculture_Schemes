@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { schemes, applications } from "@/utils/mockdata"
+import { useRouter, useParams } from "next/navigation"
+import { SchemeData, UserApplication} from "@/utils/mockdata"
 import {
   FileText,
   ArrowLeft,
@@ -19,27 +19,58 @@ import {
   Mail,
 } from "lucide-react"
 
-export default function ApplicationDetails({ params }: { params: { id: string } }) {
+
+export default function ApplicationDetails() {
+
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter()
-  const application = applications.find((app) => app.id === params.id)
-  const scheme = application ? schemes.find((s) => s.id === application.schemeId) : null
+  const params = useParams() as { id: string }
+  const [application, setApplication] = useState<UserApplication>();
+  const [scheme, setScheme] = useState<SchemeData>();
+  const BASE_URL = "http://localhost:8000/api"
+
 
   useEffect(() => {
-    // Check if user is authenticated (in a real app, use a proper auth system)
-    const authenticated = localStorage.getItem("userAuthenticated") === "true"
+
+    setIsLoading(true)
+    const authenticated = localStorage.getItem("token")?localStorage.getItem("userAuthenticated") === "true"? true : false : false
     setIsAuthenticated(authenticated)
 
-    // If not authenticated, redirect to login
     if (!authenticated) {
       router.push("/login")
     }
-  }, [router])
+
+    const fetchApplication = async ()=> {
+      const res = await fetch(`${BASE_URL}/applications/${params.id}`,{headers:{Authorization: `Bearer ${localStorage.getItem("token")}`}});
+      const data = await res.json();
+      setApplication(data);
+      fetchScheme(data.scheme._id as string)
+    }
+
+    const fetchScheme = async (schemeID: string)=> {
+      const res = await fetch(`${BASE_URL}/schemes/${schemeID}`);
+      const data = await res.json();
+      setScheme(data)
+      console.log("this is scheme data", data)
+    }
+
+    fetchApplication()
+    setIsLoading(false)
+  }, [router, params.id])
 
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto p-4 text-center">
         <p>Please login to access your application details...</p>
+      </div>
+    )
+  }
+
+  if(isLoading) {
+    return (
+      <div className="w-[100vw] h-[90vh] grid">
+        <p className="text-gray-600 dark:text-gray-400 mb-6 place-self-center">Loading please wait...</p>
       </div>
     )
   }
@@ -64,7 +95,7 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
     )
   }
 
-  // Get status badge class
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "pending":
@@ -78,7 +109,7 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
     }
   }
 
-  // Get status icon
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "pending":
@@ -108,7 +139,7 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Application Details</h1>
             </div>
             <p className="text-gray-600 dark:text-gray-400">
-              Application ID: <span className="font-medium">{application.id.toUpperCase()}</span>
+              Application ID: <span className="font-medium">{application._id.toUpperCase()}</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -136,8 +167,8 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
             <div className="h-48 relative">
               <Image
                 src={
-                  scheme.imageUrl ||
-                  `/placeholder.svg?height=400&width=800&query=agricultural scheme related to ${scheme.title.toLowerCase() || "/placeholder.svg"}`
+                  scheme?.imageUrl ||
+                  `/placeholder.svg?height=400&width=800&query=agricultural scheme related to ${scheme.title || "/placeholder.svg"}`
                 }
                 alt={scheme.title}
                 fill
@@ -173,7 +204,7 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
               <div className="flex items-center gap-2 mb-4">
                 <Calendar className="h-5 w-5 text-gray-500" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Applied on: <span className="font-medium">{application.appliedDate}</span>
+                  Applied on: <span className="font-medium">{application.appliedAt}</span>
                 </span>
               </div>
 
@@ -187,7 +218,7 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
                   </div>
                   <div className="text-sm">
                     <p className="font-medium text-gray-900 dark:text-white">Application Submitted</p>
-                    <p className="text-gray-500 dark:text-gray-400">{application.appliedDate}</p>
+                    <p className="text-gray-500 dark:text-gray-400">{application.appliedAt}</p>
                   </div>
                 </div>
 
@@ -294,8 +325,7 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
                   </p>
                   <div className="bg-white dark:bg-gray-800 p-3 rounded-md text-sm text-gray-700 dark:text-gray-300 mb-3">
                     <p>
-                      <strong>Reason for Rejection:</strong> Incomplete documentation. The land records provided do not
-                      match with the government database.
+                      <strong>Reason for Rejection:</strong> {application.remark}
                     </p>
                   </div>
                   <button className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors">
@@ -322,50 +352,22 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Uploaded Documents</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                  <div className="h-32 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <FileText className="h-12 w-12 text-gray-400" />
+                {application.documents.map((doc,index)=> (
+                  <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="h-32 bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                    {doc.url? <img src={doc.url} alt="" className="  text-gray-400"/> : <FileText className="h-12 w-12 text-gray-400" />}
                   </div>
                   <div className="p-3">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Aadhar Card</h4>
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">{doc.name? doc.name: "Not Available"}</h4>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">PDF, 1.2 MB</span>
-                      <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                        <Download size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                  <div className="h-32 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <FileText className="h-12 w-12 text-gray-400" />
-                  </div>
-                  <div className="p-3">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Land Records</h4>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">PDF, 2.5 MB</span>
                       <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
                         <Download size={16} />
                       </button>
                     </div>
                   </div>
                 </div>
-
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                  <div className="h-32 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <FileText className="h-12 w-12 text-gray-400" />
-                  </div>
-                  <div className="p-3">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Bank Details</h4>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">PDF, 0.8 MB</span>
-                      <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                        <Download size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -382,28 +384,28 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
                   <User className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Full Name</p>
-                    <p className="text-base font-medium text-gray-900 dark:text-white">{application.applicantName}</p>
+                    <p className="text-base font-medium text-gray-900 dark:text-white">{application.filledInfo.name}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <FileText className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Aadhar Number</p>
-                    <p className="text-base font-medium text-gray-900 dark:text-white">{application.aadharNumber}</p>
+                    <p className="text-base font-medium text-gray-900 dark:text-white">{application.filledInfo.aadharNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Phone className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Phone Number</p>
-                    <p className="text-base font-medium text-gray-900 dark:text-white">+91 98765 43210</p>
+                    <p className="text-base font-medium text-gray-900 dark:text-white">{application.user.phone}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Mail className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                    <p className="text-base font-medium text-gray-900 dark:text-white">rajesh.kumar@example.com</p>
+                    <p className="text-base font-medium text-gray-900 dark:text-white">{application.user.email}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -411,7 +413,7 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Address</p>
                     <p className="text-base font-medium text-gray-900 dark:text-white">
-                      Village Sundarpur, District Varanasi, Uttar Pradesh - 221001
+                      {application.filledInfo.address}
                     </p>
                   </div>
                 </div>
@@ -456,7 +458,7 @@ export default function ApplicationDetails({ params }: { params: { id: string } 
 
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Link
-                  href={`/scheme-details/${scheme.id}`}
+                  href={`/scheme-details/${application.scheme._id}`}
                   className="text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-medium"
                 >
                   View Full Scheme Details

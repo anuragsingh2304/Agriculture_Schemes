@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import texts from "@/language/en.json"
-import { Plus, Edit, Trash2, Leaf } from "lucide-react"
+import { Plus, Edit, Trash2, Leaf, ImageIcon } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 export default function AdminCrops() {
@@ -19,19 +19,22 @@ export default function AdminCrops() {
   const [soilType, setSoilType] = useState("")
   const [growthDuration, setGrowthDuration] = useState("")
   const [averageYield, setAverageYield] = useState("")
+    const [cropImage, setCropImage] = useState<string | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
   const router = useRouter()
 useEffect(() => {
-  // Check if admin is authenticated (in a real app, use a proper auth system)
   const authenticated = localStorage.getItem("adminAuthenticated") === "true"
   setIsAuthenticated(authenticated)
   
-  // If not authenticated, redirect to login
+
   if (!authenticated) {
     router.push("/admin/login")
   }
   
-  // Fetch crops from backend
+
   const token = localStorage.getItem("token")
   fetch("http://localhost:8000/api/crops", {
     headers: {
@@ -44,16 +47,65 @@ useEffect(() => {
 }, [router])
 
 
+
+
   useEffect(() => {
-    // Check if admin is authenticated (in a real app, use a proper auth system)
     const authenticated = localStorage.getItem("adminAuthenticated") === "true"
     setIsAuthenticated(authenticated)
-
-    // If not authenticated, redirect to login
     if (!authenticated) {
       router.push("/admin/login")
     }
   }, [router])
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setIsUploadingImage(true)
+      setCropImage(null) 
+
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+
+      if (!cloudName || !uploadPreset) {
+        console.error(
+          "Cloudinary cloud name or upload preset is not configured."
+        )
+        alert("File upload service is not configured. Please contact support.")
+        setIsUploadingImage(false)
+        return
+      }
+
+      const cloudinaryFormData = new FormData()
+      cloudinaryFormData.append("file", file)
+      cloudinaryFormData.append("upload_preset", uploadPreset)
+      cloudinaryFormData.append("folder", "crop_images") 
+
+      try {
+        const cloudinaryResponse = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: cloudinaryFormData
+          }
+        )
+
+        if (!cloudinaryResponse.ok) {
+          const errorData = await cloudinaryResponse.json()
+          throw new Error(
+            `Cloudinary upload failed: ${errorData.error.message}`
+          )
+        }
+        const cloudinaryData = await cloudinaryResponse.json()
+        setCropImage(cloudinaryData.secure_url)
+      } catch (error) {
+        console.error("Error uploading image to Cloudinary:", error)
+        alert(`Failed to upload image: ${error instanceof Error ? error.message : String(error)}`)
+        setCropImage(null) // Reset on error
+      } finally {
+        setIsUploadingImage(false)
+      }
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,7 +119,8 @@ useEffect(() => {
       waterRequirement,
       soilType,
       growthDuration,
-      averageYield
+      averageYield,
+      imageUrl: cropImage || ""
     }
 
     try {
@@ -103,6 +156,15 @@ useEffect(() => {
     }
   }
 
+    const triggerFileInput = () => {
+    fileInputRef.current?.click()
+  }
+
+  const clearImage = () => {
+    setCropImage(null)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
   const resetForm = () => {
     setCropName("")
     setSeason("")
@@ -113,6 +175,7 @@ useEffect(() => {
     setSoilType("")
     setGrowthDuration("")
     setAverageYield("")
+    setCropImage(null)
     setIsEditMode(false)
     setEditingCropId(null)
   }
@@ -127,6 +190,7 @@ useEffect(() => {
     setSoilType(crop.soilType)
     setGrowthDuration(crop.growthDuration)
     setAverageYield(crop.averageYield)
+    setCropImage(crop.imageUrl || null)
     setIsEditMode(true)
     setEditingCropId(crop._id)
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -151,7 +215,7 @@ useEffect(() => {
     }
   }
 
-  // Generate a background image query based on the crop name
+
   const getImageQuery = (cropName: string) => {
     return `farming ${cropName.toLowerCase()} field`
   }
@@ -186,6 +250,57 @@ useEffect(() => {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* Image Upload */}
+              <div>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Crop Image</label>
+                <div
+                  className={`border-2 border-dashed ${
+                    cropImage || isUploadingImage ? "border-green-300" : "border-gray-300"
+                  } dark:border-gray-700 rounded-md overflow-hidden ${
+                    !cropImage && "hover:bg-gray-50 dark:hover:bg-gray-800"
+                  } transition-colors`}
+                >
+                  {cropImage ? (
+                    <div className="relative">
+                      <Image
+                        src={cropImage || "/placeholder.svg"}
+                        alt="Crop preview"
+                        width={400}
+                        height={200}
+                        className="w-full h-40 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={clearImage}
+                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ) : isUploadingImage ? (
+                    <div className="p-4 text-center flex flex-col items-center justify-center h-40">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                      <span className="block text-sm text-gray-700 dark:text-gray-300 mt-2">
+                        Uploading...
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      className="p-4 text-center cursor-pointer flex flex-col items-center justify-center h-40"
+                      onClick={triggerFileInput}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <ImageIcon className="h-10 w-10 text-gray-400 mb-2" />
+                      <span className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                        Click to upload crop image (Max 2MB)
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">JPG, PNG, or GIF (Max 2MB)</span>
+                    </div>
+                  )}
+                  <input type="file" id="cropImage" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" disabled={isUploadingImage} />
+                </div>
+              </div>
               <div>
                 <label htmlFor="cropName" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
                   {texts.admin.crops.cropName} *
@@ -351,6 +466,7 @@ useEffect(() => {
                   className={`btn-primary ${isEditMode ? "bg-blue-600 hover:bg-blue-700" : ""} ${
                     isEditMode ? "ml-auto" : "w-full"
                   }`}
+                  disabled={isUploadingImage}
                 >
                   {isEditMode ? "Update Crop" : texts.common.submit}
                 </button>
@@ -373,7 +489,7 @@ useEffect(() => {
                 >
                   <div className="h-32 relative">
                     <Image
-                      src={`/abstract-geometric-shapes.png?key=c933b&height=150&width=400&query=${getImageQuery(crop.name)}`}
+                      src={crop.imageUrl || `/abstract-geometric-shapes.png?key=c933b&height=150&width=400&query=${getImageQuery(crop.name)}`}
                       alt={crop.name}
                       fill
                       className="object-cover"

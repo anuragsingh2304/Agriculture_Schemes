@@ -15,6 +15,23 @@ export interface Scheme {
   applicationDeadline?: string
 }
 
+export interface SchemeData {
+  _id: string
+  title: string
+  shortDescription:string
+  fullDescription: string
+  eligibility: string
+  benefits:string
+  documents: [string], // array of required doc names
+  imageUrl?: string
+  schemeType:string,
+  state:string
+  fundingSource: string
+  implementingAgency: string
+  targetGroup: string
+  applicationDeadline: string
+}
+
 export interface Application {
   _id: string
   schemeId: string
@@ -23,6 +40,32 @@ export interface Application {
   aadharNumber: string
   status: "pending" | "approved" | "rejected"
   appliedDate: string
+}
+
+export interface UserApplication  {
+  filledInfo : {
+            name: string
+            address: string
+            aadharNumber: string
+            landHolding:string
+            bankName: string
+            bankAccount: string
+            ifscCode: string
+  }
+  _id: string
+  user: string
+  scheme: {
+            _id: string
+            title: string
+            schemeType: string
+        }
+  status: string
+  appliedAt: string
+  remark: string
+  documents: [{
+    name: string
+    url: string
+  }]
 }
 
 export interface Crop {
@@ -37,6 +80,32 @@ export interface Crop {
   soilType?: string
   growthDuration?: string
   averageYield?: string
+}
+
+export interface userProfile {
+  _id: string
+  name: string
+  email: string
+  phone: string
+  profile: {
+    dateOfBirth: string
+    address: string
+    aadharNumber: string
+    landHolding: string
+    education: string
+    farmingExperience: string
+  }
+  bank: {
+    bankName: string
+    bankAccount: string
+    ifscCode: string
+  }
+   documents: [{
+    type: string
+    url: string
+    uploadedOn: string
+    verified: string
+   }]
 }
 
 export const schemes: Scheme[] = [

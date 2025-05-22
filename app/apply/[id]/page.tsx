@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import type React from "react"
-import Image from "next/image"
-import { useState, useEffect } from "react"
-import { schemes } from "@/utils/mockdata"
-import Link from "next/link"
-import { notFound, useRouter } from "next/navigation"
-import texts from "@/language/en.json"
+import type React from "react";
+import Image from "next/image";
+import { useState, useEffect } from "react";
+import { SchemeData, userProfile } from "@/utils/mockdata";
+import Link from "next/link";
+import { notFound, useRouter, useParams } from "next/navigation";
+import texts from "@/language/en.json";
 import {
   User,
   CreditCard,
@@ -20,16 +20,27 @@ import {
   Building,
   Phone,
   Mail,
-} from "lucide-react"
+} from "lucide-react";
 
-export default function ApplyScheme({ params }: { params: { id: string } }) {
-  const router = useRouter()
-  const scheme = schemes.find((s) => s.id === params.id)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [applicationId, setApplicationId] = useState("")
-  const [step, setStep] = useState(1)
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+interface UploadedDocument {
+  name: string;
+  url: string;
+}
+
+export default function ApplyScheme() {
+  const params = useParams() as { id: string };
+  const router = useRouter();
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [applicationId, setApplicationId] = useState("");
+  const [step, setStep] = useState(1);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [schemeData, setSchemeData] = useState<SchemeData>();
+  const [userData, setUserData] = useState<userProfile>();
+
+  const [selectedDocumentFiles, setSelectedDocumentFiles] = useState<{
+    [key: string]: File | null;
+  }>({});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -44,69 +55,215 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
     accountNumber: "",
     ifscCode: "",
     termsAgreed: false,
-  })
+    documents: [] as UploadedDocument[],
+  });
 
   useEffect(() => {
-    // Check if user is authenticated (in a real app, use a proper auth system)
-    const authenticated = localStorage.getItem("userAuthenticated") === "true"
-    setIsAuthenticated(authenticated)
+    const getScheme = async () => {
+      const res = await fetch(
+        `http://localhost:8000/api/schemes/${params.id}`,
+        {
+          cache: "no-store",
+        }
+      );
+      if (!res.ok) {
+        notFound();
+      }
+      const scheme = await res.json();
+      setSchemeData(scheme);
+      setIsLoading(false);
+    };
+    const getUser = async () => {
+      const res = await fetch("http://localhost:8000/api/user/profile", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserData(data);
+      }
+    };
+    getScheme();
+    getUser();
+    const authenticated = localStorage.getItem("userAuthenticated") === "true";
+    setIsAuthenticated(authenticated);
+  }, [params.id]);
 
-    // If authenticated, pre-fill some form fields
-    if (authenticated) {
-      setFormData((prev) => ({
-        ...prev,
-        name: "Rajesh Kumar",
-        aadhar: "XXXX-XXXX-1234",
-        address: "Village Sundarpur, District Varanasi, Uttar Pradesh - 221001",
-        phone: "+91 98765 43210",
-        email: "rajesh.kumar@example.com",
-      }))
+  useEffect(() => {
+    if (!userData || !isAuthenticated) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      name: userData.name || "",
+      aadhar: userData.profile.aadharNumber || "",
+      address: userData.profile.address || "",
+      landSize: userData.profile.landHolding || "",
+      income: "",
+      phone: userData.phone || "",
+      email: userData.email || "",
+      bankName: userData.bank.bankName || "",
+      accountNumber: userData.bank.bankAccount || "",
+      ifscCode: userData.bank.ifscCode || "",
+    }));
+  }, [userData, isAuthenticated]);
+
+  if (!isLoading) {
+    if (!schemeData) {
+      notFound();
     }
-  }, [])
-
-  if (!scheme) {
-    notFound()
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target
-    setFormData((prev) => ({ ...prev, [id]: value }))
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, checked } = e.target
-    setFormData((prev) => ({ ...prev, [id]: checked }))
-  }
+    const { id, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: checked }));
+  };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChangeForDocType = (
+    docType: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files).map((file) => file.name)
-      setUploadedFiles((prev) => [...prev, ...newFiles])
+      setSelectedDocumentFiles((prev) => ({
+        ...prev,
+        [docType]: e.target.files ? e.target.files[0] : null, 
+      }));
     }
-  }
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Generate a random application ID
-    const newApplicationId =
-      "APP" +
-      Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0")
-    setApplicationId(newApplicationId)
-    setIsSubmitted(true)
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const nextStep = () => setStep((prev) => Math.min(prev + 1, 4))
-  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1))
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      console.error(
+        "Cloudinary cloud name or upload preset is not configured."
+      );
+      alert("File upload service is not configured. Please contact support.");
+      setIsLoading(false);
+      return;
+    }
+
+    const uploadedDocumentsForBackend: UploadedDocument[] = [];
+
+    try {
+      for (const docType in selectedDocumentFiles) {
+        const file = selectedDocumentFiles[docType];
+        if (file) {
+
+          const cloudinaryFormData = new FormData();
+          cloudinaryFormData.append("file", file);
+          cloudinaryFormData.append("upload_preset", uploadPreset);
+          cloudinaryFormData.append("folder", "farmerSchemes");
+
+          const cloudinaryResponse = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, 
+            {
+              method: "POST",
+              body: cloudinaryFormData,
+            }
+          );
+
+          if (!cloudinaryResponse.ok) {
+            const errorData = await cloudinaryResponse.json();
+            throw new Error(
+              `Cloudinary upload failed for ${docType}: ${errorData.error.message}`
+            );
+          }
+          const cloudinaryData = await cloudinaryResponse.json();
+          uploadedDocumentsForBackend.push({
+            name: docType, 
+            url: cloudinaryData.secure_url,
+          });
+        }
+      }
+
+      const payloadForBackend = {
+        filledInfo: {
+          name: formData.name,
+          address: formData.address,
+          aadharNumber: formData.aadhar,
+          landHolding: formData.landSize,
+          income: formData.income,
+          bankName: formData.bankName,
+          bankAccount: formData.accountNumber,
+          ifscCode: formData.ifscCode,
+        }, 
+        documents: uploadedDocumentsForBackend, 
+      };
+
+     
+      console.log(
+        "Submitting to backend:",
+        JSON.stringify(payloadForBackend, null, 2)
+      );
+
+      const res = await fetch(
+        `http://localhost:8000/api/applications/${params.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payloadForBackend),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(`Error: ${errorData.message}`);
+      }
+      const resData = await res.json();
+      const applicationID = resData._id;
+      console.log(applicationID);
+      setApplicationId(applicationID); 
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      alert(
+        `Failed to submit application: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const nextStep = () => setStep((prev) => Math.min(prev + 1, 4));
+  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
+
+  if (isLoading) {
+    return (
+      <div className="w-[100vw] h-[90vh] grid bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
+        <p className="place-self-center text-lg text-gray-700 dark:text-gray-300 mb-2">
+          Loading please wait
+        </p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Login Required</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            Login Required
+          </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            You need to be logged in to apply for this scheme. Please login or register to continue.
+            You need to be logged in to apply for this scheme. Please login or
+            register to continue.
           </p>
           <div className="flex justify-center gap-4">
             <Link
@@ -124,7 +281,7 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (isSubmitted) {
@@ -139,11 +296,12 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
               Application Submitted Successfully
             </h1>
             <p className="text-lg text-gray-700 dark:text-gray-300 mb-2">
-              {texts.apply.applicationSubmitted} <span className="font-semibold">{applicationId}</span>
+              {texts.apply.applicationSubmitted}{" "}
+              <span className="font-semibold">{applicationId}</span>
             </p>
             <p className="text-gray-600 dark:text-gray-400 mb-8">
-              You will receive updates about your application status via email and SMS. You can also check the status in
-              your dashboard.
+              You will receive updates about your application status via email
+              and SMS. You can also check the status in your dashboard.
             </p>
             <div className="flex justify-center gap-4">
               <Link
@@ -162,7 +320,7 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -170,8 +328,10 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
       <div className="relative mb-6 rounded-xl overflow-hidden h-48">
         <Image
           src={
-            scheme.imageUrl ||
-            `/placeholder.svg?height=400&width=1200&query=agricultural scheme related to ${scheme.title.toLowerCase() || "/placeholder.svg"}`
+            schemeData?.imageUrl ||
+            `/placeholder.svg?height=400&width=1200&query=agricultural scheme related to ${
+              schemeData?.title.toLowerCase() || "/placeholder.svg"
+            }`
           }
           alt="Application form background"
           fill
@@ -180,34 +340,43 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
         <div className="absolute inset-0 bg-black/50 flex flex-col justify-center p-4">
           <div className="max-w-3xl mx-auto w-full">
             <div className="flex items-center gap-2 mb-2">
-              <Link href={`/scheme-details/${scheme.id}`} className="text-white/80 hover:text-white transition-colors">
+              <Link
+                href={`/scheme-details/${schemeData?._id}`}
+                className="text-white/80 hover:text-white transition-colors"
+              >
                 <ArrowLeft size={20} />
               </Link>
-              <h1 className="text-2xl font-bold text-white">Apply for: {scheme.title}</h1>
+              <h1 className="text-2xl font-bold text-white">
+                Apply for: {schemeData?.title}
+              </h1>
             </div>
             <p className="text-white/90 text-lg">{texts.apply.subtitle}</p>
-            {scheme.schemeType && (
+            {schemeData?.schemeType && (
               <div className="mt-3">
                 <span
                   className={`text-sm px-3 py-1 rounded-full ${
-                    scheme.schemeType === "central"
+                    schemeData.schemeType === "central"
                       ? "bg-blue-100 text-blue-800"
-                      : scheme.schemeType === "state"
-                        ? "bg-purple-100 text-purple-800"
-                        : "bg-green-100 text-green-800"
+                      : schemeData.schemeType === "state"
+                      ? "bg-purple-100 text-purple-800"
+                      : "bg-green-100 text-green-800"
                   }`}
                 >
-                  {scheme.schemeType === "central"
+                  {schemeData.schemeType === "central"
                     ? "Central Scheme"
-                    : scheme.schemeType === "state"
-                      ? `State Scheme${scheme.state ? `: ${scheme.state}` : ""}`
-                      : scheme.schemeType}
+                    : schemeData.schemeType === "state"
+                    ? `State Scheme${
+                        schemeData.state ? `: ${schemeData.state}` : ""
+                      }`
+                    : schemeData.schemeType}
                 </span>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {}
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 max-w-3xl mx-auto">
         {/* Progress Steps */}
@@ -225,7 +394,11 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
               </div>
               <span className="text-sm mt-2">Personal</span>
             </div>
-            <div className={`flex-1 h-1 mx-2 ${step >= 2 ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700"}`}></div>
+            <div
+              className={`flex-1 h-1 mx-2 ${
+                step >= 2 ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700"
+              }`}
+            ></div>
             <div className="flex flex-col items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -238,7 +411,11 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
               </div>
               <span className="text-sm mt-2">Land</span>
             </div>
-            <div className={`flex-1 h-1 mx-2 ${step >= 3 ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700"}`}></div>
+            <div
+              className={`flex-1 h-1 mx-2 ${
+                step >= 3 ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700"
+              }`}
+            ></div>
             <div className="flex flex-col items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -251,7 +428,11 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
               </div>
               <span className="text-sm mt-2">Bank</span>
             </div>
-            <div className={`flex-1 h-1 mx-2 ${step >= 4 ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700"}`}></div>
+            <div
+              className={`flex-1 h-1 mx-2 ${
+                step >= 4 ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700"
+              }`}
+            ></div>
             <div className="flex flex-col items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -277,7 +458,10 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     {texts.apply.name} *
                   </label>
                   <div className="relative">
@@ -297,7 +481,10 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label htmlFor="aadhar" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="aadhar"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     {texts.apply.aadhar} *
                   </label>
                   <div className="relative">
@@ -317,7 +504,10 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="phone"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Phone Number *
                   </label>
                   <div className="relative">
@@ -337,7 +527,10 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Email Address *
                   </label>
                   <div className="relative">
@@ -358,7 +551,10 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
               </div>
 
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="address"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   {texts.apply.address} *
                 </label>
                 <div className="relative">
@@ -378,7 +574,11 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
               </div>
 
               <div className="flex justify-end">
-                <button type="button" onClick={nextStep} className="btn-primary flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="btn-primary flex items-center gap-1"
+                >
                   Next <ChevronRight size={16} />
                 </button>
               </div>
@@ -388,11 +588,16 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
           {/* Step 2: Land Details */}
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{texts.apply.landDetails}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                {texts.apply.landDetails}
+              </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="landSize" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="landSize"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     {texts.apply.landSize} *
                   </label>
                   <div className="relative">
@@ -400,7 +605,7 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
                       <Ruler size={16} className="text-gray-400" />
                     </div>
                     <input
-                      type="number"
+                      type="text"
                       id="landSize"
                       value={formData.landSize}
                       onChange={handleInputChange}
@@ -412,7 +617,10 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label htmlFor="income" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="income"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     {texts.apply.income} *
                   </label>
                   <div className="relative">
@@ -433,18 +641,29 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
               </div>
 
               <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-400 mb-2">Important Note</h3>
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-400 mb-2">
+                  Important Note
+                </h3>
                 <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  Please ensure that the land details provided match with your land records. Any discrepancy may lead to
-                  rejection of your application.
+                  Please ensure that the land details provided match with your
+                  land records. Any discrepancy may lead to rejection of your
+                  application.
                 </p>
               </div>
 
               <div className="flex justify-between">
-                <button type="button" onClick={prevStep} className="btn-secondary">
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="btn-secondary"
+                >
                   Back
                 </button>
-                <button type="button" onClick={nextStep} className="btn-primary flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="btn-primary flex items-center gap-1"
+                >
                   Next <ChevronRight size={16} />
                 </button>
               </div>
@@ -454,11 +673,16 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
           {/* Step 3: Bank Details */}
           {step === 3 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Bank Details</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Bank Details
+              </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label htmlFor="bankName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="bankName"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Bank Name *
                   </label>
                   <div className="relative">
@@ -496,7 +720,10 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label htmlFor="ifscCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="ifscCode"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     IFSC Code *
                   </label>
                   <input
@@ -512,18 +739,29 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-400 mb-2">Why We Need This</h3>
+                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-400 mb-2">
+                  Why We Need This
+                </h3>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Your bank details are required for direct transfer of benefits under this scheme. Please ensure that
-                  the account is active and linked to your Aadhar.
+                  Your bank details are required for direct transfer of benefits
+                  under this scheme. Please ensure that the account is active
+                  and linked to your Aadhar.
                 </p>
               </div>
 
               <div className="flex justify-between">
-                <button type="button" onClick={prevStep} className="btn-secondary">
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="btn-secondary"
+                >
                   Back
                 </button>
-                <button type="button" onClick={nextStep} className="btn-primary flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="btn-primary flex items-center gap-1"
+                >
                   Next <ChevronRight size={16} />
                 </button>
               </div>
@@ -533,13 +771,19 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
           {/* Step 4: Documents */}
           {step === 4 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{texts.apply.documents}</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">{texts.apply.uploadInstructions}</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                {texts.apply.documents}
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                {texts.apply.uploadInstructions}
+              </p>
 
               <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-800 dark:text-white mb-3">Required Documents</h3>
+                <h3 className="text-sm font-medium text-gray-800 dark:text-white mb-3">
+                  Required Documents
+                </h3>
                 <ul className="space-y-2">
-                  {scheme.documents.map((doc, index) => (
+                  {schemeData?.documents.map((doc, index) => (
                     <li key={index} className="flex items-start">
                       <div className="flex-shrink-0 h-5 w-5 text-green-500">
                         <svg
@@ -555,37 +799,59 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
                           />
                         </svg>
                       </div>
-                      <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{doc}</span>
+                      <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        {doc}
+                      </span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer">
-                <label htmlFor="documents" className="cursor-pointer block">
-                  <Upload className="h-10 w-10 text-gray-400 mx-auto mb-4" />
-                  <span className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
-                    Drag and drop files here or click to browse
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Supported formats: PDF, JPG, PNG (Max 5MB each)
-                  </span>
-                  <input type="file" id="documents" multiple className="hidden" onChange={handleFileUpload} />
-                </label>
-              </div>
-
-              {uploadedFiles.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                  <h3 className="text-sm font-medium text-gray-800 dark:text-white mb-3">Uploaded Files:</h3>
-                  <ul className="space-y-2">
-                    {uploadedFiles.map((file, index) => (
-                      <li key={index} className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <Check size={16} className="text-green-600 mr-2" />
-                        {file}
-                      </li>
-                    ))}
-                  </ul>
+              {schemeData?.documents && schemeData.documents.length > 0 ? (
+                <div className="mt-6 space-y-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Please upload the following documents. Supported formats:
+                    PDF, JPG, PNG (Max 5MB each).
+                  </p>
+                  {schemeData.documents.map((docType) => (
+                    <div
+                      key={docType}
+                      className="p-4 border rounded-lg dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30"
+                    >
+                      <label
+                        htmlFor={`file-${docType.replace(/\s+/g, "-")}`}
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        {docType}{" "}
+                        {schemeData.documents?.includes(docType)
+                          ? "*"
+                          : "(Optional)"}
+                      </label>
+                      <input
+                        id={`file-${docType.replace(/\s+/g, "-")}`}
+                        type="file"
+                        accept=".jpg,.jpeg,.png" // Specify accepted file types
+                        className="mt-1 block w-full text-sm text-green-500 dark:text-gray-400
+                                  file:mr-4 file:py-2 file:px-4
+                                  file:rounded-md file:border-0
+                                  file:text-sm file:font-semibold
+                                  file:bg-primary-50 file:text-primary-700 dark:file:bg-primary-700 dark:file:text-primary-50
+                                  hover:file:bg-primary-100 dark:hover:file:bg-primary-600 cursor-pointer"
+                        onChange={(e) => handleFileChangeForDocType(docType, e)}
+                      />
+                      {selectedDocumentFiles[docType] && (
+                        <div className="mt-2 flex items-center text-xs text-green-600 dark:text-green-400">
+                          <Check size={14} className="mr-1" />
+                          Selected: {selectedDocumentFiles[docType]?.name}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
+              ) : (
+                <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                  No specific documents listed as required for this scheme.
+                </p>
               )}
 
               <div className="mt-6">
@@ -598,15 +864,25 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
                     className="rounded text-green-600 focus:ring-green-500 mr-2"
                     required
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{texts.apply.termsAgree}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {texts.apply.termsAgree}
+                  </span>
                 </label>
               </div>
 
               <div className="flex justify-between">
-                <button type="button" onClick={prevStep} className="btn-secondary">
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="btn-secondary"
+                >
                   Back
                 </button>
-                <button type="submit" className="btn-primary">
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={isLoading}
+                >
                   {texts.common.submit}
                 </button>
               </div>
@@ -615,5 +891,5 @@ export default function ApplyScheme({ params }: { params: { id: string } }) {
         </form>
       </div>
     </div>
-  )
+  );
 }

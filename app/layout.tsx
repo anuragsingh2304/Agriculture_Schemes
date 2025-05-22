@@ -9,8 +9,8 @@ import texts from "@/language/en.json"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: texts?.common?.appName || "Default App Name", // Provide a fallback
-  description: texts?.home?.subtitle || "Default Subtitle", // Provide a fallback
+  title: texts?.common?.appName || "Default App Name",
+  description: texts?.home?.subtitle || "Default Subtitle", 
   generator: "v0.dev",
 }
 

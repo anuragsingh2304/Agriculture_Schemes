@@ -25,6 +25,7 @@ export default function AdminSchemes() {
   const [targetGroup, setTargetGroup] = useState("")
   const [applicationDeadline, setApplicationDeadline] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const [state, setState] = useState("")
@@ -39,25 +40,60 @@ export default function AdminSchemes() {
   }, [])
 
   useEffect(() => {
-    // Check if admin is authenticated (in a real app, use a proper auth system)
     const authenticated = localStorage.getItem("adminAuthenticated") === "true"
     setIsAuthenticated(authenticated)
-
-    // If not authenticated, redirect to login
     if (!authenticated) {
       router.push("/admin/login")
     }
   }, [router])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setSchemeImage(event.target.result as string)
-        }
+            const file = e.target.files[0]
+      setIsUploadingImage(true)
+      setSchemeImage(null) 
+
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+
+      if (!cloudName || !uploadPreset) {
+        console.error(
+          "Cloudinary cloud name or upload preset is not configured."
+        )
+        alert("File upload service is not configured. Please contact support.")
+        setIsUploadingImage(false)
+        return
       }
-      reader.readAsDataURL(e.target.files[0])
+
+      const cloudinaryFormData = new FormData()
+      cloudinaryFormData.append("file", file)
+      cloudinaryFormData.append("upload_preset", uploadPreset)
+      cloudinaryFormData.append("folder", "scheme_images") 
+
+      try {
+        const cloudinaryResponse = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: cloudinaryFormData
+          }
+        )
+
+        if (!cloudinaryResponse.ok) {
+          const errorData = await cloudinaryResponse.json()
+          throw new Error(
+            `Cloudinary upload failed: ${errorData.error.message}`
+          )
+        }
+         const cloudinaryData = await cloudinaryResponse.json()
+        setSchemeImage(cloudinaryData.secure_url)
+      } catch (error) {
+        console.error("Error uploading image to Cloudinary:", error)
+        alert(`Failed to upload image: ${error instanceof Error ? error.message : String(error)}`)
+        setSchemeImage(null)
+      } finally {
+        setIsUploadingImage(false)
+      }
     }
   }
 
@@ -213,7 +249,7 @@ export default function AdminSchemes() {
                 <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Scheme Image</label>
                 <div
                   className={`border-2 border-dashed ${
-                    schemeImage ? "border-green-300" : "border-gray-300"
+                    schemeImage || isUploadingImage ? "border-green-300" : "border-gray-300"
                   } dark:border-gray-700 rounded-md overflow-hidden ${
                     !schemeImage && "hover:bg-gray-50 dark:hover:bg-gray-800"
                   } transition-colors`}
@@ -234,15 +270,24 @@ export default function AdminSchemes() {
                       >
                         <Trash2 size={16} />
                       </button>
+                         </div>
+                  ) : isUploadingImage ? (
+                    <div className="p-4 text-center flex flex-col items-center justify-center h-40">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                      <span className="block text-sm text-gray-700 dark:text-gray-300 mt-2">
+                        Uploading...
+                      </span>
                     </div>
                   ) : (
                     <div
                       className="p-4 text-center cursor-pointer flex flex-col items-center justify-center h-40"
                       onClick={triggerFileInput}
+                      role="button"
+                      tabIndex={0}
                     >
                       <ImageIcon className="h-10 w-10 text-gray-400 mb-2" />
                       <span className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
-                        Click to upload scheme image
+                        Click to upload scheme image (Max 2MB)
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">JPG, PNG, or GIF (Max 2MB)</span>
                     </div>
@@ -254,6 +299,8 @@ export default function AdminSchemes() {
                     onChange={handleFileChange}
                     accept="image/*"
                     className="hidden"
+                    disabled={isUploadingImage}
+
                   />
                 </div>
               </div>
@@ -490,6 +537,7 @@ export default function AdminSchemes() {
                   className={`btn-primary ${isEditMode ? "bg-blue-600 hover:bg-blue-700" : ""} ${
                     isEditMode ? "ml-auto" : "w-full"
                   }`}
+                  disabled={isUploadingImage}
                 >
                   {isEditMode ? "Update Scheme" : texts.common.submit}
                 </button>

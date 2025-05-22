@@ -23,8 +23,6 @@ export default async function SchemeDetails({ params }: { params: { id: string }
   if (!res.ok) notFound()
 
   const scheme = await res.json()
-
-  // Generate a background image query based on the scheme title
   const imageQuery = encodeURIComponent(`agricultural field related to ${scheme.title.toLowerCase()}`)
 
   return (

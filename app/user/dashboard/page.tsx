@@ -1,25 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { schemes, applications } from "@/utils/mockdata"
+import { schemes,SchemeData, UserApplication, userProfile as User } from "@/utils/mockdata"
 import {
   FileText,
   Clock,
   CheckCircle,
   XCircle,
   ArrowRight,
-  Download,
   Search,
   Filter,
   Plus,
   X,
+  Eye,
+  Trash2,
   Upload,
 } from "lucide-react"
 
-// Add this CSS for hiding scrollbars but allowing scrolling
+
 const scrollbarHideStyles = `
   .scrollbar-hide {
     -ms-overflow-style: none;  /* IE and Edge */
@@ -31,7 +32,8 @@ const scrollbarHideStyles = `
 `
 
 export default function UserDashboard() {
-  // Add style tag for the scrollbar hiding
+  const BASE_URL = "http://localhost:8000/api"
+
   useEffect(() => {
     const styleTag = document.createElement("style")
     styleTag.textContent = scrollbarHideStyles
@@ -47,9 +49,15 @@ export default function UserDashboard() {
   const [showDocTypeModal, setShowDocTypeModal] = useState(false)
   const [selectedDocType, setSelectedDocType] = useState("")
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [userProfile, setUserProfile] = useState<User>();
+  const [userApplication, setUserApplication] = useState<UserApplication[]>([]);
+  const [schemeData, setSchemeData] = useState<SchemeData[]>([]);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter()
+  let  dcumentUpload ;
 
-  // Document types
+
   const documentTypes = [
     { id: "aadhar", name: "Aadhar Card" },
     { id: "pan", name: "PAN Card" },
@@ -68,27 +76,51 @@ export default function UserDashboard() {
     aadharNumber: "XXXX-XXXX-1234",
   }
 
-  // Mock user applications
-  const userApplications = applications.slice(0, 3)
+
+
 
   useEffect(() => {
-    // Check if user is authenticated (in a real app, use a proper auth system)
+
     const authenticated = localStorage.getItem("userAuthenticated") === "true"
     setIsAuthenticated(authenticated)
 
-    // If not authenticated, redirect to login
     if (!authenticated) {
       router.push("/login")
     }
-  }, [router])
+     const fetchUser = async ()=> { 
+      
+      const response = await fetch(`${BASE_URL}/user/profile`,{
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    }
+      })
+      const data = await response.json();
+      setUserProfile(data)
+     }
 
-  // Get scheme title
-  const getSchemeTitle = (schemeId: string) => {
-    const scheme = schemes.find((s) => s._id === schemeId)
-    return scheme ? scheme.title : "Unknown Scheme"
-  }
+     const fetchApplications = async ()=> {
+        const res = await fetch(`${BASE_URL}/applications/my`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        })
+        const data = await res.json();
+        setUserApplication(data);
+     }
 
-  // Get status badge class
+     const fetchSchemes = async ()=> {
+      const res = await fetch(`${BASE_URL}/schemes`);
+      const data = await res.json()
+      setSchemeData(data);
+     }
+
+     fetchUser()
+     fetchApplications()
+     fetchSchemes()
+  }, [router, dcumentUpload])
+
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "pending":
@@ -108,21 +140,110 @@ export default function UserDashboard() {
     setShowUploadModal(true)
   }
 
-  const handleFileUpload = () => {
-    // In a real app, this would handle the file upload
-    // For now, we'll just close the modal
-    setShowUploadModal(false)
-    // Show success message or update UI
-    alert(`Document uploaded successfully: ${selectedDocType}`)
+  const handleFileUpload = async () => {
+    if (!fileToUpload || !selectedDocType) {
+      alert("Please select a file and document type.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      console.error("Cloudinary cloud name or upload preset is not configured.");
+      alert("File upload service is not configured. Please contact support.");
+      setIsUploading(false);
+      return;
+    }
+
+    const cloudinaryFormData = new FormData();
+    cloudinaryFormData.append('file', fileToUpload);
+    cloudinaryFormData.append('upload_preset', uploadPreset);
+    cloudinaryFormData.append('folder', "farmerSchemes"); 
+
+    try {
+      const cloudinaryResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, 
+        {
+          method: 'POST',
+          body: cloudinaryFormData,
+        }
+      );
+
+      if (!cloudinaryResponse.ok) {
+        const errorData = await cloudinaryResponse.json();
+        throw new Error(`Cloudinary upload failed: ${errorData.error.message}`);
+      }
+
+      const cloudinaryData = await cloudinaryResponse.json();
+      console.log("Uploaded document URL:", cloudinaryData.secure_url);
+
+      const uploadDate = new Date().toISOString();
+
+      const payloadForBackend = {
+        type: selectedDocType,
+        url: cloudinaryData.secure_url,
+        uploadedAt: uploadDate,
+      };
+      console.log("Payload for backend:", payloadForBackend);
+      
+      const docUploadRes = await fetch(`${BASE_URL}/user/document/upload`, {
+        method: "POST",
+        headers : {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify(payloadForBackend)
+    });
+     dcumentUpload = await docUploadRes.json();
+
+      alert(`Document "${documentTypes.find(dt => dt.id === selectedDocType)?.name}" uploaded successfully!`);
+      setShowUploadModal(false);
+      setFileToUpload(null);
+      setSelectedDocType("");
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      alert(`Failed to upload document: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsUploading(false);
+    }
   }
+
+const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch (error) {
+      return "Invalid Date";
+    }
+  };
 
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto p-4 text-center">
         <p>Please login to access your dashboard...</p>
+
       </div>
     )
   }
+
+  let recentApplication = true;
+  let pending = 0; let  approved = 0; let rejected = 0;
+
+  userApplication.map((idx)=> {
+    if(idx.status == "pending") pending++;
+    if(idx.status == "approved") approved++;
+    if(idx.status == "rejected") rejected++;
+    
+  })
+
+  if(userApplication.length == 0) {
+    recentApplication = false
+  }
+
+
 
   return (
     <div className="container mx-auto mt-8">
@@ -131,10 +252,10 @@ export default function UserDashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-xl font-bold text-green-600 dark:text-green-400">
-              {user.name.charAt(0)}
+              {userProfile?.name.charAt(0)}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome, {user.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome, {userProfile? userProfile.name : user.name}</h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Manage your applications and explore schemes tailored for you
               </p>
@@ -219,7 +340,7 @@ export default function UserDashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Applications</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">3</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{userApplication.length}</p>
                     </div>
                     <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
                       <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -231,7 +352,7 @@ export default function UserDashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Pending</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">2</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{pending}</p>
                     </div>
                     <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded-lg">
                       <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
@@ -243,7 +364,7 @@ export default function UserDashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Approved</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">1</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{approved}</p>
                     </div>
                     <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
                       <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -255,7 +376,7 @@ export default function UserDashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Rejected</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{rejected}</p>
                     </div>
                     <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg">
                       <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
@@ -307,16 +428,17 @@ export default function UserDashboard() {
                           </th>
                         </tr>
                       </thead>
+                      {recentApplication? 
                       <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                        {userApplications.map((application) => (
+                        {userApplication.map((application) => (
                           <tr key={application._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {getSchemeTitle(application.schemeId)}
+                                {application.scheme.title}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500 dark:text-gray-400">{application.appliedDate}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{application.appliedAt.split("T")[0]}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span
@@ -337,7 +459,12 @@ export default function UserDashboard() {
                             </td>
                           </tr>
                         ))}
+                      </tbody> : <tbody>
+                        <tr>
+                        <td colSpan={4} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">you havn't applied in any Scheme</td>
+                        </tr>
                       </tbody>
+  }
                     </table>
                   </div>
                 </div>
@@ -356,7 +483,7 @@ export default function UserDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {schemes.slice(0, 3).map((scheme) => (
+                  {schemeData.slice(0, 3).map((scheme) => (
                     <div
                       key={scheme._id}
                       className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
@@ -485,7 +612,7 @@ export default function UserDashboard() {
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                      {applications.map((application) => (
+                      {userApplication.map((application) => (
                         <tr key={application._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -494,11 +621,11 @@ export default function UserDashboard() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {getSchemeTitle(application.schemeId)}
+                              {application.scheme.title}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">{application.appliedDate}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">{application.appliedAt.split("T")[0]}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
@@ -551,7 +678,7 @@ export default function UserDashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {schemes.map((scheme) => (
+                {schemeData.map((scheme) => (
                   <div
                     key={scheme._id}
                     className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
@@ -627,59 +754,48 @@ export default function UserDashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <div className="h-40 relative bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <FileText className="h-16 w-16 text-gray-400" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Aadhar Card</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Uploaded on: 15 Oct 2023</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full">
-                        Verified
-                      </span>
-                      <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                        <Download size={18} />
-                      </button>
+                {userProfile?.documents && userProfile.documents.length > 0 ? (
+                  userProfile.documents.map((doc, index) => (
+                    <div key={index} className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-lg font-semibold text-gray-800 dark:text-white capitalize">
+                          {doc.type?.trim() || "Untitled Document"}
+                        </h4>
+                        {doc.verified && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            doc.verified.toLowerCase() === "verified" ? "bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100" :
+                            doc.verified.toLowerCase() === "pending" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100" :
+                            doc.verified.toLowerCase() === "rejected" ? "bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100" :
+                            "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100"
+                          }`}>
+                            {doc.verified}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Uploaded on: {formatDate(doc.uploadedOn)}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 truncate" title={doc.url}>
+                      File: {doc.url && typeof doc.url === 'string' ? doc.url.substring(doc.url.lastIndexOf('/') + 1) : "N/A"}                      </p>
+                      <div className="flex space-x-3">
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
+                        >
+                          <Eye size={16} className="mr-1" /> View
+                        </a>
+                        <button 
+                          onClick={() => alert("Delete functionality not yet implemented.")} // Placeholder for delete
+                          className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 flex items-center"
+                        >
+                          <Trash2 size={16} className="mr-1" /> Delete
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <div className="h-40 relative bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <FileText className="h-16 w-16 text-gray-400" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Land Records</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Uploaded on: 15 Oct 2023</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full">
-                        Verified
-                      </span>
-                      <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                        <Download size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <div className="h-40 relative bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <FileText className="h-16 w-16 text-gray-400" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Bank Details</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Uploaded on: 15 Oct 2023</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full">
-                        Verified
-                      </span>
-                      <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                        <Download size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  ))
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-400 col-span-full">No documents uploaded yet. Click the button above to upload.</p>
+                )}
               </div>
             </div>
           )}
@@ -705,7 +821,7 @@ export default function UserDashboard() {
                         <div className="w-32 h-32 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-4xl font-bold text-green-600 dark:text-green-400 mb-4">
                           {user.name.charAt(0)}
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">{user.name}</h3>
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">{userProfile? userProfile.name : user.name}</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">Farmer ID: FRM-12345</p>
                       </div>
                     </div>
@@ -714,15 +830,15 @@ export default function UserDashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Email</p>
-                          <p className="text-base font-medium text-gray-900 dark:text-white">{user.email}</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{userProfile? userProfile.email :user.email}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Phone</p>
-                          <p className="text-base font-medium text-gray-900 dark:text-white">{user.phone}</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{userProfile? userProfile.phone :user.phone}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Aadhar Number</p>
-                          <p className="text-base font-medium text-gray-900 dark:text-white">{user.aadharNumber}</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{userProfile? userProfile.profile.aadharNumber :user.aadharNumber}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Account Created</p>
@@ -730,7 +846,7 @@ export default function UserDashboard() {
                         </div>
                         <div className="md:col-span-2">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Address</p>
-                          <p className="text-base font-medium text-gray-900 dark:text-white">{user.address}</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{userProfile? userProfile.profile.address :user.address}</p>
                         </div>
                       </div>
                     </div>
@@ -785,19 +901,29 @@ export default function UserDashboard() {
                 <X size={20} />
               </button>
             </div>
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer mb-4">
-              <label htmlFor="document-upload" className="cursor-pointer block">
+          <div>
+              <label htmlFor="document-upload" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select file to upload:
+              </label>
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer mb-4 relative">
+
                 <Upload className="h-10 w-10 text-gray-400 mx-auto mb-4" />
                 <span className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
-                  Drag and drop files here or click to browse
+                   {fileToUpload ? fileToUpload.name : "Drag and drop file here or click to browse"}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   Supported formats: PDF, JPG, PNG (Max 5MB)
                 </span>
-                <input type="file" id="document-upload" className="hidden" />
-              </label>
+                <input 
+                  type="file" 
+                  id="document-upload" 
+                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10" 
+                  onChange={(e) => setFileToUpload(e.target.files ? e.target.files[0] : null)}
+                  accept=".jpg,.jpeg,.png" 
+                />
+              </div>
             </div>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowUploadModal(false)}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium"
@@ -807,8 +933,9 @@ export default function UserDashboard() {
               <button
                 onClick={handleFileUpload}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors"
+                disabled={isUploading || !fileToUpload}
               >
-                Upload
+                {isUploading ? "Uploading..." : "Upload"}
               </button>
             </div>
           </div>

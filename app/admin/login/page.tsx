@@ -34,8 +34,7 @@ export default function AdminLogin() {
          console.log(res.status)
          throw new Error(data.message || "Login failed")
        }
- 
-       // Save token and basic user info to localStorage
+
        localStorage.setItem("token", data.token)
        localStorage.setItem("userAuthenticated", "false")
        localStorage.setItem("adminAuthenticated", "true")

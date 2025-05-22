@@ -8,23 +8,19 @@ import { User, Mail, Phone, MapPin, CreditCard, Calendar, Save, Building } from 
 
 export default function ProfilePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isEditing, setIsEditing] = useState(false) // Start in view mode
+  const [isEditing, setIsEditing] = useState(false) 
   const router = useRouter()
 
   const [userData, setUserData] = useState<any>(null)
   const [renderUpdate, setRenderUpdate] = useState();
 
   useEffect(() => {
-    // Check if user is authenticated
     const authenticated = localStorage.getItem("userAuthenticated") === "true"
     setIsAuthenticated(authenticated)
-
-    // If not authenticated, redirect to login
     if (!authenticated) {
       router.push("/login")
     }
 
-    // Fetch user profile data if authenticated
     const token = localStorage.getItem("token")
     if (token) {
       fetch("http://localhost:8000/api/user/profile", {
@@ -98,11 +94,6 @@ export default function ProfilePage() {
     }
   }
 
-  const handleCancel = () => {
-    // Reset to original data and exit editing mode
-    setIsEditing(false)
-    router.push("/user/dashboard")
-  }
 
   if (!isAuthenticated) {
     return (
@@ -385,7 +376,6 @@ export default function ProfilePage() {
               <button
                 onClick={() => {
                   if (isEditing) {
-                    // Reset form and exit editing mode
                     setIsEditing(false)
                     router.push("/user/dashboard")
                   } else {

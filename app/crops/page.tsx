@@ -2,7 +2,6 @@ import type { Crop } from "@/utils/mockdata"
 import Link from "next/link"
 import Image from "next/image"
 import { Leaf, ArrowRight } from "lucide-react"
-import { useEffect } from "react"
 
 export default async function CropsPage() {
   const res = await fetch("http://localhost:8000/api/crops", {
@@ -12,8 +11,6 @@ export default async function CropsPage() {
 
   const crops: Crop[] = await res.json();
 
-
-  // Generate image query based on crop name
   const getImageQuery = (cropName: string) => {
     return encodeURIComponent(`farming ${cropName.toLowerCase()} field`)
   }

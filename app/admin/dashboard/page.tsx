@@ -10,20 +10,19 @@ export default function AdminDashboard() {
   const approvedApplications = applications.filter((app) => app.status === "approved")
   const rejectedApplications = applications.filter((app) => app.status === "rejected")
 
-  // Last 6 applications
   const recentApplications = [...applications]
     .sort((a, b) => {
       return new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime()
     })
     .slice(0, 5)
 
-  // Get scheme title
+
   const getSchemeTitle = (schemeId: string) => {
     const scheme = schemes.find((s) => s._id === schemeId)
     return scheme ? scheme.title : "Unknown Scheme"
   }
 
-  // Get status badge class
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "pending":
@@ -47,16 +46,6 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="mt-2 md:mt-0">
-          <button
-            className="btn-primary flex items-center gap-1"
-            onClick={() => {
-              // This would normally generate a report
-              console.log("Generate report")
-            }}
-          >
-            <BarChart3 size={16} />
-            Generate Report
-          </button>
         </div>
       </div>
 
