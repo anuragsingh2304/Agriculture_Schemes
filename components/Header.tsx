@@ -30,27 +30,43 @@ export default function Header() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
+  const [userName, setUserName] = useState("")
   const pathname = usePathname()
   const router = useRouter()
+  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
 
   useEffect(() => {
-    // Check authentication status
-    const userAuth = localStorage.getItem("userAuthenticated") === "true"
-    const adminAuth = localStorage.getItem("adminAuthenticated") === "true"
-    setIsAuthenticated(userAuth)
-    setIsAdminAuthenticated(adminAuth)
+    async function fetchAuthStatus() {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/my`, {
+          credentials: "include"
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setIsAuthenticated(data.role === "user");
+          setIsAdminAuthenticated(data.role === "admin");
+          setUserName(data.name);
+        } else {
+          setIsAuthenticated(false);
+          setIsAdminAuthenticated(false);
+          setUserName("");
+        }
+      } catch {
+        setIsAuthenticated(false);
+        setIsAdminAuthenticated(false);
+        setUserName("");
+      }
+    }
+
+    fetchAuthStatus();
   }, [pathname])
 
-  const handleLogout = () => {
-    localStorage.removeItem("userAuthenticated")
-    localStorage.removeItem("adminAuthenticated")
-    localStorage.removeItem("userName")
-    localStorage.removeItem("userRole")
-    localStorage.removeItem("token")
-
-    setIsAuthenticated(false)
-    setIsAdminAuthenticated(false)
-    router.push("/")
+  const handleLogout = async () => {
+    await fetch(`${BASE_URL}/api/auth/logout`, { method: "POST", credentials: "include" });
+    setIsAuthenticated(false);
+    setIsAdminAuthenticated(false);
+    setUserName("");
+    router.push("/");
   }
 
   const isActive = (path: string) => {
@@ -183,10 +199,10 @@ export default function Header() {
                   className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-sm font-bold text-green-600 dark:text-green-400">
-                    {isAdminAuthenticated ? localStorage.getItem("userName")?.charAt(0) || "A" : localStorage.getItem("userName")?.charAt(0) || "R"}
+                    {userName ? userName.charAt(0) : (isAdminAuthenticated ? "A" : "R")}
                   </div>
                   <span className="hidden sm:inline">
-                    {isAdminAuthenticated ? localStorage.getItem("userName") || "Admin" : localStorage.getItem("userName") || "User"}
+                    {userName ? userName : (isAdminAuthenticated ? "Admin" : "User")}
                   </span>
                   <ChevronDown size={14} className={`transition-transform ${isUserDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
@@ -328,7 +344,7 @@ export default function Header() {
               {isAdminAuthenticated && (
                 <>
                   <div className="border-t border-gray-200 dark:border-gray-700 my-2 px-4"></div>
-                  <p className="px-4 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{localStorage.getItem("userName") || "Admin"}</p>
+                  <p className="px-4 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{userName || "Admin"}</p>
                   <Link
                     href="/admin/dashboard"
                     className={`flex items-center gap-2 px-4 py-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium ${getActiveClass(

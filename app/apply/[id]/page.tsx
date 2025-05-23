@@ -59,9 +59,26 @@ export default function ApplyScheme() {
   });
 
   useEffect(() => {
+    async function checkAccess() {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/auth/my`, { credentials: "include" });
+        if (!res.ok) {
+          console.log(res.status)
+          router.push("/login");
+        }
+        const data = await res.json();
+
+        if (data.role !== "user") {
+          router.push("/login");
+        }else {
+          setIsAuthenticated(true)
+        }
+      }
+      checkAccess()
+
+
     const getScheme = async () => {
       const res = await fetch(
-        `http://localhost:8000/api/schemes/${params.id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/schemes/${params.id}`,
         {
           cache: "no-store",
         }
@@ -74,11 +91,7 @@ export default function ApplyScheme() {
       setIsLoading(false);
     };
     const getUser = async () => {
-      const res = await fetch("http://localhost:8000/api/user/profile", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/user/profile`, { credentials : "include"});
       if (res.ok) {
         const data = await res.json();
         setUserData(data);
@@ -86,8 +99,7 @@ export default function ApplyScheme() {
     };
     getScheme();
     getUser();
-    const authenticated = localStorage.getItem("userAuthenticated") === "true";
-    setIsAuthenticated(authenticated);
+    
   }, [params.id]);
 
   useEffect(() => {
@@ -209,14 +221,14 @@ export default function ApplyScheme() {
       );
 
       const res = await fetch(
-        `http://localhost:8000/api/applications/${params.id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/applications/${params.id}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(payloadForBackend),
+          credentials: "include"
         }
       );
 

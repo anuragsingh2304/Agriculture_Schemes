@@ -26,22 +26,19 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
+        credentials: "include"
       })
 
       const data = await res.json()
+      console.log(data)
 
       if (!res.ok) {
         throw new Error(data.message || "Login failed")
       }
 
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("userAuthenticated", "true")
-      localStorage.setItem("userName", data.user.name)
-      localStorage.setItem("userRole", data.user.role)
-
       // Redirect based on role
-      if (data.user.role === "admin") {
+      if (data.role === "admin") {
         router.push("/admin/dashboard")
       } else {
         router.push("/user/dashboard")

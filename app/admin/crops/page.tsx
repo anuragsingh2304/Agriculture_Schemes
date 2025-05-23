@@ -19,43 +19,35 @@ export default function AdminCrops() {
   const [soilType, setSoilType] = useState("")
   const [growthDuration, setGrowthDuration] = useState("")
   const [averageYield, setAverageYield] = useState("")
-    const [cropImage, setCropImage] = useState<string | null>(null)
+  const [cropImage, setCropImage] = useState<string | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
   const router = useRouter()
 useEffect(() => {
-  const authenticated = localStorage.getItem("adminAuthenticated") === "true"
-  setIsAuthenticated(authenticated)
-  
+   async function checkAccess() {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/auth/my`, { credentials: "include" });
+        if (!res.ok) {
+          console.log(res.status)
+          router.push("/admin/login");
+        }
+        const data = await res.json();
 
-  if (!authenticated) {
-    router.push("/admin/login")
-  }
-  
+        if (data.role !== "admin") {
+          router.push("/admin/login");
+        }else {
+          setIsAuthenticated(true)
+        }
+      }
+      checkAccess()
 
-  const token = localStorage.getItem("token")
-  fetch("http://localhost:8000/api/crops", {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+  fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/crops`, { credentials: "include" })
   .then(res => res.json())
   .then(data => setCropList(data))
   .catch(err => console.error("Failed to fetch crops:", err))
 }, [router])
 
-
-
-
-  useEffect(() => {
-    const authenticated = localStorage.getItem("adminAuthenticated") === "true"
-    setIsAuthenticated(authenticated)
-    if (!authenticated) {
-      router.push("/admin/login")
-    }
-  }, [router])
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -109,7 +101,6 @@ useEffect(() => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const token = localStorage.getItem("token")
     const formData = {
       name: cropName,
       season,
@@ -125,16 +116,16 @@ useEffect(() => {
 
     try {
       const url = isEditMode
-        ? `http://localhost:8000/api/crops/${editingCropId}`
-        : "http://localhost:8000/api/crops"
+        ? `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/crops/${editingCropId}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/crops`
       const method = isEditMode ? "PUT" : "POST"
       const res = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
+        credentials: "include"
       })
 
       const savedCrop = await res.json()
@@ -197,13 +188,10 @@ useEffect(() => {
   }
 
   const handleDeleteCrop = async (cropId: string) => {
-    const token = localStorage.getItem("token")
     try {
-      const res = await fetch(`http://localhost:8000/api/crops/${cropId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/crops/${cropId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        credentials: "include"
       })
       if (res.ok) {
         setCropList((prev) => prev.filter((crop) => crop._id !== cropId))

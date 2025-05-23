@@ -30,21 +30,28 @@ export default function AdminSchemes() {
   const router = useRouter()
   const [state, setState] = useState("")
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    fetch("http://localhost:8000/api/schemes", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/schemes`, { credentials: "include" })
       .then(res => res.json())
       .then(data => setSchemeList(data))
       .catch(err => console.error("Failed to fetch schemes:", err))
   }, [])
 
   useEffect(() => {
-    const authenticated = localStorage.getItem("adminAuthenticated") === "true"
-    setIsAuthenticated(authenticated)
-    if (!authenticated) {
-      router.push("/admin/login")
-    }
+     async function checkAccess() {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/auth/my`, { credentials: "include" });
+        if (!res.ok) {
+          console.log(res.status)
+          router.push("/login");
+        }
+        const data = await res.json();
+
+        if (data.role !== "admin") {
+          router.push("/login");
+        }else {
+          setIsAuthenticated(true)
+        }
+      }
+      checkAccess()
   }, [router])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,8 +116,6 @@ export default function AdminSchemes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const token = localStorage.getItem("token")
-
     const formData = {
       title,
       shortDescription,
@@ -129,16 +134,16 @@ export default function AdminSchemes() {
 
     try {
       const url = isEditMode
-        ? `http://localhost:8000/api/schemes/${editingSchemeId}`
-        : "http://localhost:8000/api/schemes"
+        ? `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/schemes/${editingSchemeId}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/schemes`
       const method = isEditMode ? "PUT" : "POST"
 
       const res = await fetch(url, {
         method: method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
+        credentials: "include",
         body: JSON.stringify(formData)
       })
 
@@ -198,11 +203,10 @@ export default function AdminSchemes() {
   }
 
   const handleDeleteScheme = async (schemeId: string) => {
-    const token = localStorage.getItem("token")
     try {
-      const res = await fetch(`http://localhost:8000/api/schemes/${schemeId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/schemes/${schemeId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       })
       if (res.ok) {
         setSchemeList((prev) => prev.filter((s) => s._id !== schemeId))

@@ -15,44 +15,39 @@ export default function AdminLogin() {
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-     e.preventDefault()
-     setError("")
-     setIsLoading(true)
- 
-     try {
-       const res = await fetch("http://localhost:8000/api/auth/admin/login", {
-         method: "POST",
-         headers: {
-           "Content-Type": "application/json"
-         },
-         body: JSON.stringify({ email, password })
-       })
- 
-       const data = await res.json()
- 
-       if (!res.ok) {
-         console.log(res.status)
-         throw new Error(data.message || "Login failed")
-       }
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-       localStorage.setItem("token", data.token)
-       localStorage.setItem("userAuthenticated", "false")
-       localStorage.setItem("adminAuthenticated", "true")
-       localStorage.setItem("userName", data.user.name)
-       localStorage.setItem("userRole", data.user.role)
- 
-       // Redirect based on role
-       if (data.user.role === "admin") {
-         router.push("/admin/dashboard")
-       } else {
-         router.push("/user/dashboard")
-       }
-     } catch (err: any) {
-       setError(err.message)
-     }
- 
-     setIsLoading(false)
-   }
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include" // Required to send cookie
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log(res.status);
+        throw new Error(data.message || "Login failed");
+      }
+
+      // Redirect based on role
+      if (data.user.role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/user/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
+
+    setIsLoading(false);
+  }
 
   return (
     <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-12rem)]">

@@ -28,31 +28,40 @@ export default function ApplicationDetails() {
   const params = useParams() as { id: string }
   const [application, setApplication] = useState<UserApplication>();
   const [scheme, setScheme] = useState<SchemeData>();
-  const BASE_URL = "http://localhost:8000/api"
+  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
 
 
   useEffect(() => {
 
     setIsLoading(true)
-    const authenticated = localStorage.getItem("token")?localStorage.getItem("userAuthenticated") === "true"? true : false : false
-    setIsAuthenticated(authenticated)
-
-    if (!authenticated) {
-      router.push("/login")
+    async function checkAccess() {
+    const res = await fetch(`${BASE_URL}/api/user/profile`, { credentials: "include" });
+    if (!res.ok) {
+      console.log(res.status)
+      router.push("/login");
     }
+    const data = await res.json();
+
+    if (data.role !== "user") {
+      router.push("/login");
+    }else {
+      setIsAuthenticated(true)
+    }
+  }
+  checkAccess();
+
 
     const fetchApplication = async ()=> {
-      const res = await fetch(`${BASE_URL}/applications/${params.id}`,{headers:{Authorization: `Bearer ${localStorage.getItem("token")}`}});
+      const res = await fetch(`${BASE_URL}/api/applications/${params.id}`,{credentials: "include"});
       const data = await res.json();
       setApplication(data);
       fetchScheme(data.scheme._id as string)
     }
 
     const fetchScheme = async (schemeID: string)=> {
-      const res = await fetch(`${BASE_URL}/schemes/${schemeID}`);
+      const res = await fetch(`${BASE_URL}/api/schemes/${schemeID}`);
       const data = await res.json();
       setScheme(data)
-      console.log("this is scheme data", data)
     }
 
     fetchApplication()

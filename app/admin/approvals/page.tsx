@@ -47,7 +47,7 @@ interface ApplicationFromBackend {
 
 
 type Application = ApplicationFromBackend;
-const API_BASE_URL = "http://localhost:8000/api/applications";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/applications`;
 
 
 export default function AdminApprovals() {
@@ -69,12 +69,7 @@ export default function AdminApprovals() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await fetch(`${API_BASE_URL}/`, { credentials: "include" });
       if (!response.ok) {
         const errorBody = await response.text();
         throw new Error(
@@ -82,6 +77,7 @@ export default function AdminApprovals() {
         );
       }
       const data: Application[] = await response.json();
+      console.log(data)
       setApplicationsData(data);
     } catch (err) {
       setError(
@@ -93,7 +89,7 @@ export default function AdminApprovals() {
     } finally {
       setIsLoading(false);
     }
-  }, []); 
+  }, []);
 
   useEffect(() => {
     fetchApplications();
@@ -153,9 +149,9 @@ export default function AdminApprovals() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(payload),
+          credentials: "include"
         }
       );
 

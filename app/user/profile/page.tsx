@@ -10,24 +10,28 @@ export default function ProfilePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isEditing, setIsEditing] = useState(false) 
   const router = useRouter()
-
   const [userData, setUserData] = useState<any>(null)
   const [renderUpdate, setRenderUpdate] = useState();
+  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
 
   useEffect(() => {
-    const authenticated = localStorage.getItem("userAuthenticated") === "true"
-    setIsAuthenticated(authenticated)
-    if (!authenticated) {
-      router.push("/login")
-    }
-
-    const token = localStorage.getItem("token")
-    if (token) {
-      fetch("http://localhost:8000/api/user/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`
+        async function checkAccess() {
+        const res = await fetch(`${BASE_URL}/api/auth/my`, { credentials: "include" });
+        if (!res.ok) {
+          console.log(res.status)
+          router.push("/login");
         }
-      })
+        const data = await res.json();
+
+        if (data.role !== "user") {
+          router.push("/login");
+        }else {
+          setIsAuthenticated(true)
+        }
+      }
+      checkAccess()
+
+      fetch(`${BASE_URL}/api/user/profile`, { credentials: "include"})
         .then(res => res.json())
         .then(data => {
           setUserData({
@@ -37,7 +41,7 @@ export default function ProfilePage() {
           })
         })
         .catch(err => console.error("Failed to fetch profile:", err))
-    }
+    
   }, [router, renderUpdate])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -51,7 +55,6 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     setIsEditing(false)
-    const token = localStorage.getItem("token")
 
     const updatedPayload = {
       name: userData.name,
@@ -73,13 +76,13 @@ export default function ProfilePage() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/api/user/profile/update", {
+      const res = await fetch(`${BASE_URL}/api/user/profile/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(updatedPayload)
+        body: JSON.stringify(updatedPayload),
+        credentials: "include"
       })
 
       if (!res.ok) {

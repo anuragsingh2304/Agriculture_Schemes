@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { schemes,SchemeData, UserApplication, userProfile as User } from "@/utils/mockdata"
+import { SchemeData, UserApplication, userProfile as User } from "@/utils/mockdata"
 import {
   FileText,
   Clock,
@@ -32,7 +32,7 @@ const scrollbarHideStyles = `
 `
 
 export default function UserDashboard() {
-  const BASE_URL = "http://localhost:8000/api"
+  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
 
   useEffect(() => {
     const styleTag = document.createElement("style")
@@ -80,44 +80,45 @@ export default function UserDashboard() {
 
 
   useEffect(() => {
-
-    const authenticated = localStorage.getItem("userAuthenticated") === "true"
-    setIsAuthenticated(authenticated)
-
-    if (!authenticated) {
-      router.push("/login")
+    async function checkAccess() {
+    const res = await fetch(`${BASE_URL}/api/auth/my`, { credentials: "include" });
+    if (!res.ok) {
+      console.log(res.status)
+      router.push("/login");
     }
+    const data = await res.json();
+
+    if (data.role !== "user") {
+      router.push("/login");
+    }else {
+      setIsAuthenticated(true)
+    }
+  }
      const fetchUser = async ()=> { 
       
-      const response = await fetch(`${BASE_URL}/user/profile`,{
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`
-    }
-      })
+      const response = await fetch(`${BASE_URL}/api/user/profile`,{ credentials: "include" })
       const data = await response.json();
       setUserProfile(data)
      }
 
      const fetchApplications = async ()=> {
-        const res = await fetch(`${BASE_URL}/applications/my`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
-        })
+        const res = await fetch(`${BASE_URL}/api/applications/my`, { credentials:"include" })
         const data = await res.json();
         setUserApplication(data);
      }
 
      const fetchSchemes = async ()=> {
-      const res = await fetch(`${BASE_URL}/schemes`);
+      const res = await fetch(`${BASE_URL}/api/schemes`);
       const data = await res.json()
       setSchemeData(data);
      }
-
+     checkAccess()
      fetchUser()
      fetchApplications()
      fetchSchemes()
+     console.log(userProfile?.documents.map((doc)=> {
+      console.log(doc)
+     }))
   }, [router, dcumentUpload])
 
 
@@ -189,13 +190,13 @@ export default function UserDashboard() {
       };
       console.log("Payload for backend:", payloadForBackend);
       
-      const docUploadRes = await fetch(`${BASE_URL}/user/document/upload`, {
+      const docUploadRes = await fetch(`${BASE_URL}/api/user/document/upload`, {
         method: "POST",
         headers : {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
         },
-        body: JSON.stringify(payloadForBackend)
+        body: JSON.stringify(payloadForBackend),
+        credentials: "include"
     });
      dcumentUpload = await docUploadRes.json();
 
@@ -755,11 +756,11 @@ const formatDate = (dateString: string | undefined) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {userProfile?.documents && userProfile.documents.length > 0 ? (
-                  userProfile.documents.map((doc, index) => (
+                  userProfile.documents.map((doc, index) => ( 
                     <div key={index} className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="text-lg font-semibold text-gray-800 dark:text-white capitalize">
-                          {doc.type?.trim() || "Untitled Document"}
+                          {doc.docName?.trim() || "Untitled Document"}
                         </h4>
                         {doc.verified && (
                           <span className={`text-xs px-2 py-1 rounded-full ${
@@ -773,11 +774,11 @@ const formatDate = (dateString: string | undefined) => {
                         )}
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Uploaded on: {formatDate(doc.uploadedOn)}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 truncate" title={doc.url}>
-                      File: {doc.url && typeof doc.url === 'string' ? doc.url.substring(doc.url.lastIndexOf('/') + 1) : "N/A"}                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 truncate" title={doc.docUrl}>
+                      File: {doc.docUrl && typeof doc.docUrl === 'string' ? doc.docUrl.substring(doc.docUrl.lastIndexOf('/') + 1) : "N/A"}</p>
                       <div className="flex space-x-3">
                         <a
-                          href={doc.url}
+                          href={doc.docUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"

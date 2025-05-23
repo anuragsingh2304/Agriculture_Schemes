@@ -101,8 +101,8 @@ export interface userProfile {
     ifscCode: string
   }
    documents: [{
-    type: string
-    url: string
+    docName: string
+    docUrl: string
     uploadedOn: string
     verified: string
    }]

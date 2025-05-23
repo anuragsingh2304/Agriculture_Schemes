@@ -1,25 +1,70 @@
 "use client"
 
 import Link from "next/link"
-import { schemes, applications, crops } from "@/utils/mockdata"
+import { schemes, crops , userProfile, UserApplication, Application} from "@/utils/mockdata"
 import texts from "@/language/en.json"
-import { FileText, TrendingUp, Clock, CheckCircle, XCircle, Leaf, BarChart3, ArrowRight } from "lucide-react"
+import { FileText, TrendingUp, Clock, CheckCircle, XCircle, Leaf, ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback } from "react"
 
 export default function AdminDashboard() {
-  const pendingApplications = applications.filter((app) => app.status === "pending")
-  const approvedApplications = applications.filter((app) => app.status === "approved")
-  const rejectedApplications = applications.filter((app) => app.status === "rejected")
+  const [user, setUser] = useState<userProfile>();
+  const [recentApplications, setRecentApplication] = useState<UserApplication[]>([]);
+  const router = useRouter();
 
-  const recentApplications = [...applications]
-    .sort((a, b) => {
-      return new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime()
+
+  const fetchApplications = useCallback(async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/applications/`, { credentials: "include" });
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(
+            `Failed to fetch applications: ${response.status} ${response.statusText}. ${errorBody}`
+          );
+        }
+        const data: UserApplication[] = await response.json();
+        setRecentApplication(data);
+      } catch (err) {
+        
+        setRecentApplication([]);
+      } finally {
+
+      }
+    }, [router]);
+
+  useEffect(() => {
+  async function checkAccess() {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/auth/my`, { credentials: "include" });
+    if (!res.ok) {
+      console.log(res.status)
+      router.push("/admin/login");
+    }
+    const data = await res.json();
+    setUser(data);
+
+    if (data.role !== "admin") {
+      router.push("/admin/login");
+    }
+  }
+
+  checkAccess();
+  fetchApplications();
+}, []);
+
+
+  const pendingApplications = recentApplications.filter((app) => app.status === "pending")
+  const approvedApplications = recentApplications.filter((app) => app.status === "approved")
+  const rejectedApplications = recentApplications.filter((app) => app.status === "rejected")
+
+  recentApplications.sort((a, b) => {
+      return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
     })
     .slice(0, 5)
 
 
   const getSchemeTitle = (schemeId: string) => {
-    const scheme = schemes.find((s) => s._id === schemeId)
-    return scheme ? scheme.title : "Unknown Scheme"
+     const app = recentApplications.find((s) => s.scheme._id === schemeId);
+     return app ? app.scheme.title : "Unknown Scheme";
   }
 
 
@@ -42,7 +87,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-md font-bold text-gray-900 dark:text-white mb-1">{texts.admin.dashboard.title}</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Welcome back, {localStorage.getItem("userName") || "Admin" } Here's what's happening with your applications.
+            Welcome back, {user?.name || "Admin" } Here's what's happening with your applications.
           </p>
         </div>
         <div className="mt-2 md:mt-0">
@@ -172,15 +217,15 @@ export default function AdminDashboard() {
                       <td className="px-2 py-2 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300 mr-2">
-                            {application.applicantName.charAt(0)}
+                            {application.filledInfo.name.charAt(0)}
                           </div>
-                          <div className="text-xs text-gray-900 dark:text-gray-100">{application.applicantName}</div>
+                          <div className="text-xs text-gray-900 dark:text-gray-100">{application.filledInfo.name}</div>
                         </div>
                       </td>
                       <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
-                        {getSchemeTitle(application.schemeId)}
+                        {getSchemeTitle(application.scheme._id)}
                       </td>
-                      <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">{application.appliedDate}</td>
+                      <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">{application.appliedAt.split("T")[0]}</td>
                       <td className="px-2 py-2 text-xs">
                         <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(application.status)}`}>
                           {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
@@ -245,3 +290,4 @@ export default function AdminDashboard() {
     </div>
   )
 }
+
