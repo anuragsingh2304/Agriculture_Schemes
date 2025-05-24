@@ -5,7 +5,7 @@ import Link from "next/link"
 import type { Scheme } from "@/utils/mockdata"
 
 export default async function Home() {
-  const res = await fetch("http://localhost:8000/api/schemes", {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/schemes`, {
     cache: "no-store"
   })
   const schemes: Scheme[] = await res.json()
