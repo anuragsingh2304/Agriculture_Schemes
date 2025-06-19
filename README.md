@@ -135,6 +135,11 @@ farmer-schemes-portal/
   - Tailwind CSS for styling
   - React Hook Form for form handling
 
+- **Backend**:
+  - Express.js
+  - Mongo DB Atlas
+  - Json web tokens 
+
 - **State Management**:
   - React Context API
   - React Hooks
