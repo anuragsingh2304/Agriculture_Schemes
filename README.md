@@ -1,4 +1,4 @@
-# 🌾 Farming Scheme Application
+# 🌾 Farming Government aided Scheme Application
 
 A full-stack web application that helps farmers discover, apply for, and track government agriculture schemes based on their eligibility. The application supports registration, login, profile management, financial details, and real-time application status tracking.
 
