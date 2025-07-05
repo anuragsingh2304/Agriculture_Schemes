@@ -229,14 +229,17 @@ farmer-schemes-portal/
 
 This is a group project made with the efforts of each contributor **👨‍💻**
 
-1. **[Atul Mishra](https://github.com/AtulMishra001) :** 
+
+1. **[Anurag Singh](https://github.com/manvesingh) :**
+- contributed by creating a responsive and optimized Front-end.
+- Deployment of Front-end(on Vercel)
+- Developing Frontend in next.js and tailwindcss 
+
+2. **[Atul Mishra](https://github.com/AtulMishra001) :** 
  contributed by 
  - Developing the RESTful API.
  - Integration of Front-end, Back-end.
- - Deployment of Front-end(on Vercel), Back-end(on rander)
-
-2. **[Anurag Singh](https://github.com/manvesingh) :**
-- contributed by creating a responsive and optimized Front-end.
+ - Deployment of Back-end(on render)
 
 3. **[Praveen Kumar](https://github.com/praveenpal21) :**
 - Contributed by writting Documentation and creating test cases for better development.
